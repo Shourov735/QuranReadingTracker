@@ -654,3 +654,98 @@ of the session, in this format:
   stats vs. what was tapped; temporarily move REMINDER_HOUR/MINUTE to confirm
   the notification fires (revert to 18/30); toggle System/Light/Dark in
   Settings and relaunch; eyeball every screen in both themes.
+
+---
+
+## Phase 11 — EAS Build Setup for a Standalone APK (2026-08-06)
+- Built: EAS Build configuration so the project can produce a standalone
+  installable `.apk` (no Expo Go required). `app.json` gains
+  `android.package: "com.shourov735.quranreadingtracker"` (permanent reverse-
+  domain identifier, set deliberately instead of letting a CLI wizard
+  auto-generate one) with every other `"android"` field untouched.
+  `expo-notifications` is now registered as a plain string in the `"plugins"`
+  array — on native builds this gives the reminder notification the app's own
+  icon instead of Android's default bell; in Expo Go it's inert (config
+  plugins only run at prebuild). New root-level `eas.json` defines exactly
+  one profile, `preview` (internal distribution, `buildType: "apk"`).
+- Files: `app.json` (+`android.package`, +`"expo-notifications"` in plugins),
+  `eas.json` (new), `PROGRESS_LOG.md`.
+- Decisions/deviations: Nothing beyond the phase prompt was added — no
+  `development`/`production` profiles, no env config, no `android` extras.
+  `eas login` / `eas build:configure` / `eas build` were NOT run (need the
+  owner's Expo account credentials — manual steps, see below). Note: the
+  working tree already carried uncommitted `app.json` changes from after the
+  phase-10 commit — `extra.eas.projectId` (9673ac35-c88e-4179-ba2a-a820a5409fd1)
+  and `owner` (shourov735s-team), presumably from the owner linking this repo
+  to an EAS project. They are EAS-relevant so they're included in the phase-11
+  commit rather than being reverted.
+- Next phase should know: Config-only changes — no JS touched, `npx tsc
+  --noEmit` passes, `npx expo config --type public` shows
+  `android.package` set and the plugins array correct, and
+  `npx expo config --type prebuild` resolves the expo-notifications plugin
+  without error. Since no native `android/` folder exists, `eas build`
+  (owner's step) will run prebuild on EAS servers and generate the native
+  project there; the `preview` profile's `buildType: "apk"` gives a single
+  installable APK. The standalone build will NOT have the Phase 0
+  reanimated pin concern (that pin is a workaround for Expo Go's bundled
+  native versions; EAS builds the app's own native code with the installed
+  package versions) and does not need the Phase 6 deep-import workaround
+  either (that workaround exists only because Expo Go lacks push support —
+  the standalone build supports the full expo-notifications API, though this
+  app still never uses push). The app id `com.shourov735.quranreadingtracker`
+  is permanent once the first build ships — changing it later would make
+  updates install as a new app.
+- Manual steps for the owner (Expo Go device check + real build): (1) Full
+  smoke test in Expo Go as usual — Home, both update screens, Settings,
+  History — since this phase changed config only. (2) `eas login` with your
+  Expo account, then `eas build --profile preview --platform android` (no
+  `eas build:configure` needed — `eas.json` already exists and the project is
+  already linked via `extra.eas.projectId`). (3) When the build finishes,
+  download the APK from the EAS link and install it on the phone — verify
+  first launch, notification permission prompt, the reminder scheduling
+  (console log), and that the app icon is the custom book glyph.
+- Suggested commit message: `phase-11: eas build configuration`
+
+---
+
+## Phase 12 — Complete Project README (2026-08-06)
+- Built: `README.md` at the repo root rewritten into the full 14-section
+  structure: title + one-line tagline, three shields.io badges (MIT license,
+  Android platform, built with Expo — no CI badge since there's no CI),
+  table of contents with GitHub anchor links, About (tone pulled from
+  `User Story & Project Context.md`), refined Features list, Screenshots
+  section with placeholder image tags, Tech stack (verified against
+  `package.json`: Expo SDK 57, RN + strict TypeScript, AsyncStorage,
+  expo-notifications, @react-native-picker/picker), Getting Started with the
+  two paths (build-your-own APK summary with the `eas-cli`/`eas login`/`eas
+  build --platform android --profile preview` flow, and the direct download
+  link to the existing EAS build), Project structure, How this project was
+  built (phased-build explanation, now referencing phases 0–11), required
+  Data sources & acknowledgments section, Roadmap (the future-features list
+  from the User Story doc, marked not yet implemented, plus editable
+  reminder time since AGENTS.md documents it), Contributing, and License.
+- Files: `README.md` (rewritten), `assets/screenshots/.gitkeep` (new —
+  placeholder folder for the owner's future screenshots so the README's
+  image paths have a real target), `PROGRESS_LOG.md`.
+- Decisions/deviations: The old README's Expo Go run instructions were not
+  discarded — they now live in the Contributing section ("install deps and
+  run locally"), which is where a clone-and-run reader most needs them.
+  Facts re-verified against the repo rather than copy-pasted: data totals
+  re-derived from `data/quran-metadata.json` via a one-liner (114 surahs,
+  6,236 ayat, 556 ruku — matches the attribution section's claims), package
+  versions from `package.json`, folder layout from the filesystem. The
+  `Data Sources & Acknowledgments` heading uses `&`, whose GitHub anchor is
+  the double-hyphen form (`#data-sources--acknowledgments`) per GitHub's
+  anchor rules — used in the TOC. Screenshots are placeholders only
+  (`assets/screenshots/home.png`, `update.png`, `history.png`) with a
+  clearly marked note; no images were generated.
+- Next phase should know: Nothing pending — this is a docs-only phase. The
+  owner has since added the real screenshots (`assets/screenshots/home.png`,
+  `update.png`, `history.png`, 1080×2460, matching the README image tags), the
+  placeholder note was removed from the Screenshots section, and
+  `assets/screenshots/.gitkeep` was deleted. If the EAS download link ever
+  changes (new build), update it in the Getting Started section. No code
+  changed: `npx tsc --noEmit` still passes (untouched), no acceptance
+  criteria needed device verification this phase beyond reading the
+  rendered README on GitHub.
+- Suggested commit message: `phase-12: complete project README`
