@@ -73,3 +73,29 @@ of the session, in this format:
 
 ---
 
+## Phase 1 — Quran Metadata Layer (2026-08-06)
+- Built: A typed metadata layer over the existing `data/quran-metadata.json`
+  (114 surahs, already in place from Phase 0). `types/surah.ts` defines the
+  `SurahMeta` interface matching the JSON shape exactly (number,
+  nameArabic, nameTransliteration, totalAyat, totalRuku). `data/quran-metadata.ts`
+  is the loader: `getAllSurahs()`, `getSurahByNumber(number)` (throws a loud
+  error outside 1-114), and `getNextSurahNumber(number)` returning `number + 1`
+  or `null` on 114 (this null is what Phase 3 uses for end-of-Quran
+  completion detection).
+- Files: `types/surah.ts` (new), `data/quran-metadata.ts` (new),
+  `types/.gitkeep` (removed — folder now has real content).
+- Decisions/deviations: JSON imported directly via `resolveJsonModule`
+  (already enabled in expo's base tsconfig) and cast to `SurahMeta[]`; the
+  loader is the single typed gateway so components never touch the raw JSON.
+  `LAST_SURAH_NUMBER` is a named constant rather than hardcoding 114 in the
+  functions. No screens, storage, or UI changed — nothing user-visible.
+- Next phase should know: Verified once with a throwaway script (not shipped):
+  114 entries, `totalAyat` sums to 6236, numbers 1-114 in order, and all four
+  acceptance checks pass (getAllSurahs returns 114 in order; surah 2 is
+  Al-Baqarah 286/40; getNextSurahNumber(114) → null; (1) → 2; out-of-range
+  throws). Domain logic in Phase 3 should call `getNextSurahNumber()` and
+  treat `null` as the completion trigger — do not re-implement range checks
+  with hardcoded 114 in domain code.
+
+---
+
