@@ -99,3 +99,44 @@ of the session, in this format:
 
 ---
 
+## Phase 2 — Storage Layer & Progress Data Models (2026-08-06)
+- Built: The progress data shapes and the single storage abstraction.
+  `types/progress.ts` defines `ArabicProgress` (surah/ruku), `BanglaProgress`
+  (surah/ayat) — each with `completed`, `completedCount`, `lastUpdatedAt`
+  (ISO string or null) — plus the `ReadingDay` record and `ReadingDays` map
+  (`Record<string, ReadingDay>` keyed by `YYYY-MM-DD` date string) that Phase
+  3/8 will use for the both-tracks streak. Default-state factories
+  `createDefaultArabicProgress()` / `createDefaultBanglaProgress()` (surah 1,
+  ruku/ayat 1, not completed, count 0, updated null).
+  `services/progress-storage.ts` is the only file that touches
+  `AsyncStorage`, exposing `get/setArabicProgress`, `get/setBanglaProgress`,
+  `get/setReadingDays`. Storage keys are namespaced
+  (`quran-reading-tracker:arabic-progress`, `:bangla-progress`,
+  `:reading-days`).
+- Files: `types/progress.ts` (new), `services/progress-storage.ts` (new),
+  `services/.gitkeep` (removed — folder now has real content).
+- Decisions/deviations: Reads validate the stored shape before returning:
+  structural checks (field types, positive-integer ruku/ayat,
+  non-negative-integer completedCount, string-or-null lastUpdatedAt) plus a
+  surah-range check via `getAllSurahs().length` — not a hardcoded 114 — so a
+  corrupted surah number can't crash Phase 3's `getSurahByNumber`. Any parse
+  failure, JSON corruption, or invalid shape falls back to the default state;
+  a corrupted `reading-days` map falls back to `{}` (a single invalid entry
+  rejects the whole map — simplicity over partial salvage, revisit if Phase 8
+  needs it). Read errors from AsyncStorage itself are caught the same way;
+  write errors are allowed to propagate (callers decide). `ReadingDays` is a
+  map keyed by date rather than an array because the phase spec says "keyed
+  by date" — Phase 3 does `days[key] = { ... }` lookups.
+- Next phase should know: Logic verified once with a throwaway Node script
+  (mock AsyncStorage, not shipped): fresh-install defaults, arabic/bangla
+  round-trips, reading-days round-trip, and 6 corruption cases (broken JSON,
+  wrong shape, surah 999, negative ruku, array values, invalid reading-day
+  entry) all fall back to defaults. Acceptance criteria were NOT yet verified
+  in Expo Go on a device — that's the owner's step. Phase 3 should use
+  `getArabicProgress()`/`setArabicProgress()` etc. from
+  `services/progress-storage.ts` and never import `AsyncStorage` itself.
+  Date-key formatting (`YYYY-MM-DD` local) is deliberately not provided yet —
+  Phase 3 decides where it lives.
+
+---
+
