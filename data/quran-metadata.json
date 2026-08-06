@@ -1,0 +1,800 @@
+[
+  {
+    "number": 1,
+    "nameArabic": "الفاتحة",
+    "nameTransliteration": "Al-Fatihah",
+    "totalAyat": 7,
+    "totalRuku": 1
+  },
+  {
+    "number": 2,
+    "nameArabic": "البقرة",
+    "nameTransliteration": "Al-Baqarah",
+    "totalAyat": 286,
+    "totalRuku": 40
+  },
+  {
+    "number": 3,
+    "nameArabic": "آل عمران",
+    "nameTransliteration": "Ali 'Imran",
+    "totalAyat": 200,
+    "totalRuku": 20
+  },
+  {
+    "number": 4,
+    "nameArabic": "النساء",
+    "nameTransliteration": "An-Nisa",
+    "totalAyat": 176,
+    "totalRuku": 24
+  },
+  {
+    "number": 5,
+    "nameArabic": "المائدة",
+    "nameTransliteration": "Al-Ma'idah",
+    "totalAyat": 120,
+    "totalRuku": 16
+  },
+  {
+    "number": 6,
+    "nameArabic": "الأنعام",
+    "nameTransliteration": "Al-An'am",
+    "totalAyat": 165,
+    "totalRuku": 20
+  },
+  {
+    "number": 7,
+    "nameArabic": "الأعراف",
+    "nameTransliteration": "Al-A'raf",
+    "totalAyat": 206,
+    "totalRuku": 24
+  },
+  {
+    "number": 8,
+    "nameArabic": "الأنفال",
+    "nameTransliteration": "Al-Anfal",
+    "totalAyat": 75,
+    "totalRuku": 10
+  },
+  {
+    "number": 9,
+    "nameArabic": "التوبة",
+    "nameTransliteration": "At-Tawbah",
+    "totalAyat": 129,
+    "totalRuku": 16
+  },
+  {
+    "number": 10,
+    "nameArabic": "يونس",
+    "nameTransliteration": "Yunus",
+    "totalAyat": 109,
+    "totalRuku": 11
+  },
+  {
+    "number": 11,
+    "nameArabic": "هود",
+    "nameTransliteration": "Hud",
+    "totalAyat": 123,
+    "totalRuku": 10
+  },
+  {
+    "number": 12,
+    "nameArabic": "يوسف",
+    "nameTransliteration": "Yusuf",
+    "totalAyat": 111,
+    "totalRuku": 12
+  },
+  {
+    "number": 13,
+    "nameArabic": "الرعد",
+    "nameTransliteration": "Ar-Ra'd",
+    "totalAyat": 43,
+    "totalRuku": 6
+  },
+  {
+    "number": 14,
+    "nameArabic": "ابراهيم",
+    "nameTransliteration": "Ibrahim",
+    "totalAyat": 52,
+    "totalRuku": 7
+  },
+  {
+    "number": 15,
+    "nameArabic": "الحجر",
+    "nameTransliteration": "Al-Hijr",
+    "totalAyat": 99,
+    "totalRuku": 6
+  },
+  {
+    "number": 16,
+    "nameArabic": "النحل",
+    "nameTransliteration": "An-Nahl",
+    "totalAyat": 128,
+    "totalRuku": 16
+  },
+  {
+    "number": 17,
+    "nameArabic": "الإسراء",
+    "nameTransliteration": "Al-Isra",
+    "totalAyat": 111,
+    "totalRuku": 12
+  },
+  {
+    "number": 18,
+    "nameArabic": "الكهف",
+    "nameTransliteration": "Al-Kahf",
+    "totalAyat": 110,
+    "totalRuku": 12
+  },
+  {
+    "number": 19,
+    "nameArabic": "مريم",
+    "nameTransliteration": "Maryam",
+    "totalAyat": 98,
+    "totalRuku": 6
+  },
+  {
+    "number": 20,
+    "nameArabic": "طه",
+    "nameTransliteration": "Taha",
+    "totalAyat": 135,
+    "totalRuku": 8
+  },
+  {
+    "number": 21,
+    "nameArabic": "الأنبياء",
+    "nameTransliteration": "Al-Anbya",
+    "totalAyat": 112,
+    "totalRuku": 7
+  },
+  {
+    "number": 22,
+    "nameArabic": "الحج",
+    "nameTransliteration": "Al-Hajj",
+    "totalAyat": 78,
+    "totalRuku": 10
+  },
+  {
+    "number": 23,
+    "nameArabic": "المؤمنون",
+    "nameTransliteration": "Al-Mu'minun",
+    "totalAyat": 118,
+    "totalRuku": 6
+  },
+  {
+    "number": 24,
+    "nameArabic": "النور",
+    "nameTransliteration": "An-Nur",
+    "totalAyat": 64,
+    "totalRuku": 9
+  },
+  {
+    "number": 25,
+    "nameArabic": "الفرقان",
+    "nameTransliteration": "Al-Furqan",
+    "totalAyat": 77,
+    "totalRuku": 6
+  },
+  {
+    "number": 26,
+    "nameArabic": "الشعراء",
+    "nameTransliteration": "Ash-Shu'ara",
+    "totalAyat": 227,
+    "totalRuku": 11
+  },
+  {
+    "number": 27,
+    "nameArabic": "النمل",
+    "nameTransliteration": "An-Naml",
+    "totalAyat": 93,
+    "totalRuku": 7
+  },
+  {
+    "number": 28,
+    "nameArabic": "القصص",
+    "nameTransliteration": "Al-Qasas",
+    "totalAyat": 88,
+    "totalRuku": 8
+  },
+  {
+    "number": 29,
+    "nameArabic": "العنكبوت",
+    "nameTransliteration": "Al-'Ankabut",
+    "totalAyat": 69,
+    "totalRuku": 7
+  },
+  {
+    "number": 30,
+    "nameArabic": "الروم",
+    "nameTransliteration": "Ar-Rum",
+    "totalAyat": 60,
+    "totalRuku": 6
+  },
+  {
+    "number": 31,
+    "nameArabic": "لقمان",
+    "nameTransliteration": "Luqman",
+    "totalAyat": 34,
+    "totalRuku": 3
+  },
+  {
+    "number": 32,
+    "nameArabic": "السجدة",
+    "nameTransliteration": "As-Sajdah",
+    "totalAyat": 30,
+    "totalRuku": 3
+  },
+  {
+    "number": 33,
+    "nameArabic": "الأحزاب",
+    "nameTransliteration": "Al-Ahzab",
+    "totalAyat": 73,
+    "totalRuku": 9
+  },
+  {
+    "number": 34,
+    "nameArabic": "سبإ",
+    "nameTransliteration": "Saba",
+    "totalAyat": 54,
+    "totalRuku": 6
+  },
+  {
+    "number": 35,
+    "nameArabic": "فاطر",
+    "nameTransliteration": "Fatir",
+    "totalAyat": 45,
+    "totalRuku": 5
+  },
+  {
+    "number": 36,
+    "nameArabic": "يس",
+    "nameTransliteration": "Ya-Sin",
+    "totalAyat": 83,
+    "totalRuku": 5
+  },
+  {
+    "number": 37,
+    "nameArabic": "الصافات",
+    "nameTransliteration": "As-Saffat",
+    "totalAyat": 182,
+    "totalRuku": 5
+  },
+  {
+    "number": 38,
+    "nameArabic": "ص",
+    "nameTransliteration": "Sad",
+    "totalAyat": 88,
+    "totalRuku": 5
+  },
+  {
+    "number": 39,
+    "nameArabic": "الزمر",
+    "nameTransliteration": "Az-Zumar",
+    "totalAyat": 75,
+    "totalRuku": 8
+  },
+  {
+    "number": 40,
+    "nameArabic": "غافر",
+    "nameTransliteration": "Ghafir",
+    "totalAyat": 85,
+    "totalRuku": 9
+  },
+  {
+    "number": 41,
+    "nameArabic": "فصلت",
+    "nameTransliteration": "Fussilat",
+    "totalAyat": 54,
+    "totalRuku": 6
+  },
+  {
+    "number": 42,
+    "nameArabic": "الشورى",
+    "nameTransliteration": "Ash-Shuraa",
+    "totalAyat": 53,
+    "totalRuku": 5
+  },
+  {
+    "number": 43,
+    "nameArabic": "الزخرف",
+    "nameTransliteration": "Az-Zukhruf",
+    "totalAyat": 89,
+    "totalRuku": 7
+  },
+  {
+    "number": 44,
+    "nameArabic": "الدخان",
+    "nameTransliteration": "Ad-Dukhan",
+    "totalAyat": 59,
+    "totalRuku": 3
+  },
+  {
+    "number": 45,
+    "nameArabic": "الجاثية",
+    "nameTransliteration": "Al-Jathiyah",
+    "totalAyat": 37,
+    "totalRuku": 4
+  },
+  {
+    "number": 46,
+    "nameArabic": "الأحقاف",
+    "nameTransliteration": "Al-Ahqaf",
+    "totalAyat": 35,
+    "totalRuku": 4
+  },
+  {
+    "number": 47,
+    "nameArabic": "محمد",
+    "nameTransliteration": "Muhammad",
+    "totalAyat": 38,
+    "totalRuku": 4
+  },
+  {
+    "number": 48,
+    "nameArabic": "الفتح",
+    "nameTransliteration": "Al-Fath",
+    "totalAyat": 29,
+    "totalRuku": 4
+  },
+  {
+    "number": 49,
+    "nameArabic": "الحجرات",
+    "nameTransliteration": "Al-Hujurat",
+    "totalAyat": 18,
+    "totalRuku": 2
+  },
+  {
+    "number": 50,
+    "nameArabic": "ق",
+    "nameTransliteration": "Qaf",
+    "totalAyat": 45,
+    "totalRuku": 3
+  },
+  {
+    "number": 51,
+    "nameArabic": "الذاريات",
+    "nameTransliteration": "Adh-Dhariyat",
+    "totalAyat": 60,
+    "totalRuku": 3
+  },
+  {
+    "number": 52,
+    "nameArabic": "الطور",
+    "nameTransliteration": "At-Tur",
+    "totalAyat": 49,
+    "totalRuku": 2
+  },
+  {
+    "number": 53,
+    "nameArabic": "النجم",
+    "nameTransliteration": "An-Najm",
+    "totalAyat": 62,
+    "totalRuku": 3
+  },
+  {
+    "number": 54,
+    "nameArabic": "القمر",
+    "nameTransliteration": "Al-Qamar",
+    "totalAyat": 55,
+    "totalRuku": 3
+  },
+  {
+    "number": 55,
+    "nameArabic": "الرحمن",
+    "nameTransliteration": "Ar-Rahman",
+    "totalAyat": 78,
+    "totalRuku": 3
+  },
+  {
+    "number": 56,
+    "nameArabic": "الواقعة",
+    "nameTransliteration": "Al-Waqi'ah",
+    "totalAyat": 96,
+    "totalRuku": 3
+  },
+  {
+    "number": 57,
+    "nameArabic": "الحديد",
+    "nameTransliteration": "Al-Hadid",
+    "totalAyat": 29,
+    "totalRuku": 4
+  },
+  {
+    "number": 58,
+    "nameArabic": "المجادلة",
+    "nameTransliteration": "Al-Mujadila",
+    "totalAyat": 22,
+    "totalRuku": 3
+  },
+  {
+    "number": 59,
+    "nameArabic": "الحشر",
+    "nameTransliteration": "Al-Hashr",
+    "totalAyat": 24,
+    "totalRuku": 3
+  },
+  {
+    "number": 60,
+    "nameArabic": "الممتحنة",
+    "nameTransliteration": "Al-Mumtahanah",
+    "totalAyat": 13,
+    "totalRuku": 2
+  },
+  {
+    "number": 61,
+    "nameArabic": "الصف",
+    "nameTransliteration": "As-Saf",
+    "totalAyat": 14,
+    "totalRuku": 2
+  },
+  {
+    "number": 62,
+    "nameArabic": "الجمعة",
+    "nameTransliteration": "Al-Jumu'ah",
+    "totalAyat": 11,
+    "totalRuku": 2
+  },
+  {
+    "number": 63,
+    "nameArabic": "المنافقون",
+    "nameTransliteration": "Al-Munafiqun",
+    "totalAyat": 11,
+    "totalRuku": 2
+  },
+  {
+    "number": 64,
+    "nameArabic": "التغابن",
+    "nameTransliteration": "At-Taghabun",
+    "totalAyat": 18,
+    "totalRuku": 2
+  },
+  {
+    "number": 65,
+    "nameArabic": "الطلاق",
+    "nameTransliteration": "At-Talaq",
+    "totalAyat": 12,
+    "totalRuku": 2
+  },
+  {
+    "number": 66,
+    "nameArabic": "التحريم",
+    "nameTransliteration": "At-Tahrim",
+    "totalAyat": 12,
+    "totalRuku": 2
+  },
+  {
+    "number": 67,
+    "nameArabic": "الملك",
+    "nameTransliteration": "Al-Mulk",
+    "totalAyat": 30,
+    "totalRuku": 2
+  },
+  {
+    "number": 68,
+    "nameArabic": "القلم",
+    "nameTransliteration": "Al-Qalam",
+    "totalAyat": 52,
+    "totalRuku": 2
+  },
+  {
+    "number": 69,
+    "nameArabic": "الحاقة",
+    "nameTransliteration": "Al-Haqqah",
+    "totalAyat": 52,
+    "totalRuku": 2
+  },
+  {
+    "number": 70,
+    "nameArabic": "المعارج",
+    "nameTransliteration": "Al-Ma'arij",
+    "totalAyat": 44,
+    "totalRuku": 2
+  },
+  {
+    "number": 71,
+    "nameArabic": "نوح",
+    "nameTransliteration": "Nuh",
+    "totalAyat": 28,
+    "totalRuku": 2
+  },
+  {
+    "number": 72,
+    "nameArabic": "الجن",
+    "nameTransliteration": "Al-Jinn",
+    "totalAyat": 28,
+    "totalRuku": 2
+  },
+  {
+    "number": 73,
+    "nameArabic": "المزمل",
+    "nameTransliteration": "Al-Muzzammil",
+    "totalAyat": 20,
+    "totalRuku": 2
+  },
+  {
+    "number": 74,
+    "nameArabic": "المدثر",
+    "nameTransliteration": "Al-Muddaththir",
+    "totalAyat": 56,
+    "totalRuku": 2
+  },
+  {
+    "number": 75,
+    "nameArabic": "القيامة",
+    "nameTransliteration": "Al-Qiyamah",
+    "totalAyat": 40,
+    "totalRuku": 2
+  },
+  {
+    "number": 76,
+    "nameArabic": "الانسان",
+    "nameTransliteration": "Al-Insan",
+    "totalAyat": 31,
+    "totalRuku": 2
+  },
+  {
+    "number": 77,
+    "nameArabic": "المرسلات",
+    "nameTransliteration": "Al-Mursalat",
+    "totalAyat": 50,
+    "totalRuku": 2
+  },
+  {
+    "number": 78,
+    "nameArabic": "النبإ",
+    "nameTransliteration": "An-Naba",
+    "totalAyat": 40,
+    "totalRuku": 2
+  },
+  {
+    "number": 79,
+    "nameArabic": "النازعات",
+    "nameTransliteration": "An-Nazi'at",
+    "totalAyat": 46,
+    "totalRuku": 2
+  },
+  {
+    "number": 80,
+    "nameArabic": "عبس",
+    "nameTransliteration": "Abasa",
+    "totalAyat": 42,
+    "totalRuku": 1
+  },
+  {
+    "number": 81,
+    "nameArabic": "التكوير",
+    "nameTransliteration": "At-Takwir",
+    "totalAyat": 29,
+    "totalRuku": 1
+  },
+  {
+    "number": 82,
+    "nameArabic": "الإنفطار",
+    "nameTransliteration": "Al-Infitar",
+    "totalAyat": 19,
+    "totalRuku": 1
+  },
+  {
+    "number": 83,
+    "nameArabic": "المطففين",
+    "nameTransliteration": "Al-Mutaffifin",
+    "totalAyat": 36,
+    "totalRuku": 1
+  },
+  {
+    "number": 84,
+    "nameArabic": "الإنشقاق",
+    "nameTransliteration": "Al-Inshiqaq",
+    "totalAyat": 25,
+    "totalRuku": 1
+  },
+  {
+    "number": 85,
+    "nameArabic": "البروج",
+    "nameTransliteration": "Al-Buruj",
+    "totalAyat": 22,
+    "totalRuku": 1
+  },
+  {
+    "number": 86,
+    "nameArabic": "الطارق",
+    "nameTransliteration": "At-Tariq",
+    "totalAyat": 17,
+    "totalRuku": 1
+  },
+  {
+    "number": 87,
+    "nameArabic": "الأعلى",
+    "nameTransliteration": "Al-A'la",
+    "totalAyat": 19,
+    "totalRuku": 1
+  },
+  {
+    "number": 88,
+    "nameArabic": "الغاشية",
+    "nameTransliteration": "Al-Ghashiyah",
+    "totalAyat": 26,
+    "totalRuku": 1
+  },
+  {
+    "number": 89,
+    "nameArabic": "الفجر",
+    "nameTransliteration": "Al-Fajr",
+    "totalAyat": 30,
+    "totalRuku": 1
+  },
+  {
+    "number": 90,
+    "nameArabic": "البلد",
+    "nameTransliteration": "Al-Balad",
+    "totalAyat": 20,
+    "totalRuku": 1
+  },
+  {
+    "number": 91,
+    "nameArabic": "الشمس",
+    "nameTransliteration": "Ash-Shams",
+    "totalAyat": 15,
+    "totalRuku": 1
+  },
+  {
+    "number": 92,
+    "nameArabic": "الليل",
+    "nameTransliteration": "Al-Layl",
+    "totalAyat": 21,
+    "totalRuku": 1
+  },
+  {
+    "number": 93,
+    "nameArabic": "الضحى",
+    "nameTransliteration": "Ad-Duhaa",
+    "totalAyat": 11,
+    "totalRuku": 1
+  },
+  {
+    "number": 94,
+    "nameArabic": "الشرح",
+    "nameTransliteration": "Ash-Sharh",
+    "totalAyat": 8,
+    "totalRuku": 1
+  },
+  {
+    "number": 95,
+    "nameArabic": "التين",
+    "nameTransliteration": "At-Tin",
+    "totalAyat": 8,
+    "totalRuku": 1
+  },
+  {
+    "number": 96,
+    "nameArabic": "العلق",
+    "nameTransliteration": "Al-'Alaq",
+    "totalAyat": 19,
+    "totalRuku": 1
+  },
+  {
+    "number": 97,
+    "nameArabic": "القدر",
+    "nameTransliteration": "Al-Qadr",
+    "totalAyat": 5,
+    "totalRuku": 1
+  },
+  {
+    "number": 98,
+    "nameArabic": "البينة",
+    "nameTransliteration": "Al-Bayyinah",
+    "totalAyat": 8,
+    "totalRuku": 1
+  },
+  {
+    "number": 99,
+    "nameArabic": "الزلزلة",
+    "nameTransliteration": "Az-Zalzalah",
+    "totalAyat": 8,
+    "totalRuku": 1
+  },
+  {
+    "number": 100,
+    "nameArabic": "العاديات",
+    "nameTransliteration": "Al-'Adiyat",
+    "totalAyat": 11,
+    "totalRuku": 1
+  },
+  {
+    "number": 101,
+    "nameArabic": "القارعة",
+    "nameTransliteration": "Al-Qari'ah",
+    "totalAyat": 11,
+    "totalRuku": 1
+  },
+  {
+    "number": 102,
+    "nameArabic": "التكاثر",
+    "nameTransliteration": "At-Takathur",
+    "totalAyat": 8,
+    "totalRuku": 1
+  },
+  {
+    "number": 103,
+    "nameArabic": "العصر",
+    "nameTransliteration": "Al-'Asr",
+    "totalAyat": 3,
+    "totalRuku": 1
+  },
+  {
+    "number": 104,
+    "nameArabic": "الهمزة",
+    "nameTransliteration": "Al-Humazah",
+    "totalAyat": 9,
+    "totalRuku": 1
+  },
+  {
+    "number": 105,
+    "nameArabic": "الفيل",
+    "nameTransliteration": "Al-Fil",
+    "totalAyat": 5,
+    "totalRuku": 1
+  },
+  {
+    "number": 106,
+    "nameArabic": "قريش",
+    "nameTransliteration": "Quraysh",
+    "totalAyat": 4,
+    "totalRuku": 1
+  },
+  {
+    "number": 107,
+    "nameArabic": "الماعون",
+    "nameTransliteration": "Al-Ma'un",
+    "totalAyat": 7,
+    "totalRuku": 1
+  },
+  {
+    "number": 108,
+    "nameArabic": "الكوثر",
+    "nameTransliteration": "Al-Kawthar",
+    "totalAyat": 3,
+    "totalRuku": 1
+  },
+  {
+    "number": 109,
+    "nameArabic": "الكافرون",
+    "nameTransliteration": "Al-Kafirun",
+    "totalAyat": 6,
+    "totalRuku": 1
+  },
+  {
+    "number": 110,
+    "nameArabic": "النصر",
+    "nameTransliteration": "An-Nasr",
+    "totalAyat": 3,
+    "totalRuku": 1
+  },
+  {
+    "number": 111,
+    "nameArabic": "المسد",
+    "nameTransliteration": "Al-Masad",
+    "totalAyat": 5,
+    "totalRuku": 1
+  },
+  {
+    "number": 112,
+    "nameArabic": "الإخلاص",
+    "nameTransliteration": "Al-Ikhlas",
+    "totalAyat": 4,
+    "totalRuku": 1
+  },
+  {
+    "number": 113,
+    "nameArabic": "الفلق",
+    "nameTransliteration": "Al-Falaq",
+    "totalAyat": 5,
+    "totalRuku": 1
+  },
+  {
+    "number": 114,
+    "nameArabic": "الناس",
+    "nameTransliteration": "An-Nas",
+    "totalAyat": 6,
+    "totalRuku": 1
+  }
+]
