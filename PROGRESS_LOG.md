@@ -293,3 +293,102 @@ of the session, in this format:
 
 ---
 
+## Phase 6 — Daily Local Reminder Notification (2026-08-06)
+- Built: Local daily reminder at 18:30 device time via `expo-notifications`
+  (never push). `services/notification-service.ts` runs once at app launch
+  from the root layout plus on every AppState `active` (foreground) event.
+  Permission flow: `getPermissionsAsync` — requests only when status is
+  `undetermined`, silently respects `granted`/`denied` (no repeated nagging).
+  The skip-if-done-today check reads today's reading-day record from the
+  Phase 2/3 storage: if both Arabic and Bangla were already updated today, the
+  18:30 instance for today is cancelled so it never fires after the user has
+  read. Content is the single static message "Don't forget to read the Qur'an
+  today." (no dynamic text at fire time, per phase). Scheduled-notification
+  state is logged to the console after every reconcile
+  (`getAllScheduledNotificationsAsync`) for on-device verification.
+- Files: `services/notification-service.ts` (new), `app/_layout.tsx`
+  (useEffect once + AppState listener), `domain/progress-logic.ts`
+  (+`isReadingDayComplete` pure helper), `package.json`, `package-lock.json`
+  (+`expo-notifications@~57.0.8`, `expo-device@~57.0.1` via
+  `npx expo install`; `expo-constants@~57.0.9` was already a dependency from
+  Phase 0 — expo install just verified it).
+- Decisions/deviations: The daily trigger fires every day at 18:30 including
+  the current day, so "cancel today's instance but keep tomorrow" needs two
+  notifications: a daily-repeating one (`quran-daily-reminder`) plus a one-shot
+  for tomorrow 18:30 (`quran-tomorrow-reminder`) that temporarily replaces it
+  on a day where both tracks are already done. The daily-repeating one is
+  re-established on the next app foreground. Edge case accepted for v1: if the
+  user reads both tracks, then doesn't open the app at all the following day,
+  that single day has no reminder (the one-shot fired, the daily isn't
+  restored until the next open) — the app's daily-use pattern makes this rare,
+  and no background task is allowed this phase. The check runs only on launch
+  and foreground per the phase's explicit scope: reading done in-session after
+  the check (e.g. quick-update taps) cancels the reminder at the *next*
+  foreground, not immediately — deliberate simplification. Permission request
+  and reconcile are wrapped in a single-flight guard so concurrent launch +
+  AppState events can't double-request or double-schedule. SDK 57's
+  notification handler requires `shouldShowBanner`/`shouldShowList` (new iOS
+  fields, safe no-ops on Android). An Android channel
+  `quran-reading-reminders` (HIGH importance, audible) is created and passed
+  as `channelId` on both triggers. `Device.isDevice` guard + try/catch skip
+  scheduling in non-native environments (web) instead of crashing.
+- Next phase should know: To verify the notification actually fires on the
+  phone during testing, temporarily change `REMINDER_HOUR`/`REMINDER_MINUTE`
+  in `services/notification-service.ts` (e.g. to a few minutes from now) and
+  revert to 18/30 before finishing — the reconcile only (re)schedules when
+  something is missing, so a leftover test one-shot should be cancelled in
+  Settings or by clearing Expo Go's data before the final check. The
+  `isReadingDayComplete` helper is in `domain/` and reusable by any later
+  "today done" UI. `npx tsc --noEmit` passes. Do NOT run `expo install --fix`
+  (Phase 0 reanimated pin). No changes to Home or the update screens — no
+  regression risk. Acceptance criteria NOT yet verified in Expo Go on a
+  device — that's the owner's manual step: first-launch permission dialog,
+  console shows the daily notification scheduled, fires at 18:30, and
+  updating both tracks then reopening the app removes that day's instance.
+
+---
+
+## Phase 6 follow-up — Expo Go Android import crash fix (2026-08-06)
+- Built: Fixed the app crashing on launch/HMR in Expo Go on Android with
+  "expo-notifications: Android Push notifications ... removed from Expo Go
+  with the release of SDK 53". The package's main entry (`build/index.js`)
+  eagerly re-exports `getExpoPushTokenAsync`, which imports the side-effect
+  module `DevicePushTokenAutoRegistration.fx.js`; at module load that
+  registers a push-token listener via `addPushTokenListener`, which calls
+  `warnOfExpoGoPushUsage()` — a hard `throw` on Android inside Expo Go
+  (push was removed from Expo Go in SDK 53; the throw was added in SDK 55
+  by expo/expo#39459 as "error visibility", but because it fires from a
+  module-load side effect it crashes ANY app that merely imports
+  `expo-notifications`, even for local-only use. This contradicts the docs'
+  "local notifications remain available in Expo Go" claim; no upstream fix
+  or filed issue found as of 2026-08-06).
+- Files: `services/notification-service.ts` (imports only).
+- Decisions/deviations: Workaround — deep-import only the local-notification
+  submodules (`expo-notifications/build/{NotificationPermissions,
+  NotificationsHandler, Notifications.types,
+  NotificationChannelManager.types, scheduleNotificationAsync,
+  getAllScheduledNotificationsAsync, cancelScheduledNotificationAsync,
+  setNotificationChannelAsync}`), none of which transitively import the
+  push-token chain (`TokenEmitter`, `getExpoPushTokenAsync`,
+  `getDevicePushTokenAsync`, `DevicePushTokenAutoRegistration.fx`,
+  `ServerRegistrationModule` — verified by reading each module's import
+  graph). No push-related code is ever loaded. A one-line comment above the
+  import block explains the workaround (AGENTS.md exception). Metro
+  resolves the deep paths fine (`expo-notifications` has no `exports` map)
+  and platform resolution still picks `setNotificationChannelAsync.android`
+  on Android. Alternatives rejected: downgrading the JS package to a
+  pre-throw version (SDK 55− JS against Expo Go 57 native = version skew);
+  Metro aliasing (extra config for one consumer); development build (out of
+  scope — Expo Go is the only test target per AGENTS.md).
+- Next phase should know: If expo-notifications ever moves the auto-
+  registration out of the eager import path (or Expo Go ships push again),
+  revert to `import * as Notifications from 'expo-notifications'` and drop
+  the deep imports. The deep paths point at `build/` output — if a future
+  `expo-notifications` patch restructures those files, update the paths
+  (check the import graph again if anything moves). Keep the rest of the
+  logic untouched. The console log of scheduled notifications and the
+  test-time procedure from the Phase 6 entry still apply. `npx tsc --noEmit`
+  passes.
+
+---
+

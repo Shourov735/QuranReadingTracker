@@ -163,6 +163,11 @@ export function recordReadingDay(
   return { ...readingDays, [date]: updated };
 }
 
+export function isReadingDayComplete(readingDays: ReadingDays, dateKey: string): boolean {
+  const day = readingDays[dateKey];
+  return day !== undefined && day.arabicUpdated && day.banglaUpdated;
+}
+
 export function calculateStreak(readingDays: ReadingDay[]): number {
   const bothUpdatedDays = new Set(
     readingDays
