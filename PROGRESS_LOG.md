@@ -140,3 +140,58 @@ of the session, in this format:
 
 ---
 
+## Phase 3 — Progress Business Logic (2026-08-06)
+- Built: Pure domain logic in `domain/progress-logic.ts` (no React, no RN, no
+  AsyncStorage imports). `advanceRuku`/`advanceAyat`: increment within a surah;
+  roll over to the next surah at ruku/ayat 1 when past the last one; on Surah
+  114's last ruku/ayat set `completed: true`, bump `completedCount`, and stay
+  frozen at 114 (no loop to Surah 1); any call after completion is a no-op
+  returning the input unchanged. `setArabicProgress`/`setBanglaProgress`:
+  validate against metadata (`getSurahByNumber` throws out-of-range, throws on
+  ruku/ayat < 1 or > total), always clear `completed`, keep `completedCount`.
+  `resetArabicProgress`/`resetBanglaProgress`: back to surah 1 ruku/ayat 1,
+  `completed: false`, `completedCount` preserved (lifetime counter). All
+  mutating paths stamp `lastUpdatedAt` with `new Date().toISOString()`.
+  `recordReadingDay`: marks a track for a date in the reading-days record,
+  creating the date's entry if needed, idempotent per track+date.
+  `calculateStreak`: counts consecutive calendar days ending today, or ending
+  yesterday when today doesn't qualify yet, where a day has BOTH
+  `arabicUpdated` and `banglaUpdated` true; any gap breaks it; empty → 0.
+- Files: `domain/progress-logic.ts` (new), `domain/.gitkeep` (removed — folder
+  now has real content). A throwaway verification script `progress-check.ts`
+  (created, run, deleted — not shipped).
+- Decisions/deviations: The phase prompt types `recordReadingDay` as
+  `ReadingDay[]`, but Phase 2 locked `ReadingDays` (`Record<string, ReadingDay>`)
+  as the storage shape and its log explicitly said Phase 3 does
+  `days[key] = {...}` lookups — so `recordReadingDay` takes and returns
+  `ReadingDays` so the later wiring phase can pass `getReadingDays()`/the
+  result straight into `setReadingDays()` with zero conversion. `calculateStreak`
+  keeps the prompt's `ReadingDay[]` input (callers pass `Object.values(record)`).
+  `set*` functions throw loud errors on invalid combos (matching the metadata
+  loader's throwing style) rather than silently no-op'ing, so a manual-edit UI
+  can surface them. `formatDateKey` (YYYY-MM-DD local) is exported from the
+  domain module — this is the date-key formatting Phase 2 deliberately left
+  unplaced; future phases use it for `recordReadingDay`'s `date` arg and the
+  streak's "today". Streak date math parses keys into LOCAL dates
+  (`new Date(y, m-1, d)`, never `new Date('YYYY-MM-DD')` which is UTC), so
+  midnight boundaries are right on the device.
+- Next phase should know: Verified with a throwaway script compiled by the
+  project's own tsc (`--ignoreConfig --module node16 --moduleResolution node16
+  --resolveJsonModule`) to /tmp/opencode and run with plain node — the repo has
+  no ts-node and no @types/node, so the check script used self-contained assert
+  helpers. 36/36 checks pass: arabic rollover surah 1→2 and surah 2 last ruku→3,
+  bangla rollover surah 1 ayat 7→2 and surah 2 ayat 286→3, completion freeze at
+  Surah 114 (1 ruku / 6 ayat) with `completedCount` bump and no-op afterwards,
+  set-throws (ruku 0, ruku 41 for surah 2, surah 999, ayat 287), set clears
+  `completed` and keeps `completedCount`, resets keep `completedCount`,
+  `recordReadingDay` idempotency, and 9 streak cases (empty, one-track days,
+  today-only, yesterday-only, runs ending today/yesterday, gaps, order
+  independence). `npx tsc --noEmit` passes project-wide with the new file.
+  `expo lint` was NOT run: the repo has no ESLint config and `expo lint` would
+  scaffold/install one, which is out of scope — revisit if the owner wants lint
+  wired up. Acceptance criteria not yet verified in Expo Go on a device — this
+  phase adds no UI, so that's the owner's smoke check that the app still boots
+  unchanged.
+
+---
+
