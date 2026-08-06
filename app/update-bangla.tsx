@@ -22,7 +22,9 @@ import {
   setBanglaProgress as persistBanglaProgress,
   setReadingDays as persistReadingDays,
 } from '../services/progress-storage';
+import { appendHistoryEntry } from '../services/history-storage';
 import type { BanglaProgress } from '../types/progress';
+import { createHistoryEntry } from '../types/history';
 
 const ALL_SURAHS = getAllSurahs();
 
@@ -62,7 +64,13 @@ export default function UpdateBanglaScreen() {
       const next = setBanglaProgress(progress, surahNumber, ayat);
       await persistBanglaProgress(next);
       const days = await getReadingDays();
-      await persistReadingDays(recordReadingDay(days, 'bangla', formatDateKey(new Date())));
+      const todayKey = formatDateKey(new Date());
+      await persistReadingDays(recordReadingDay(days, 'bangla', todayKey));
+      if (next.surah !== progress.surah || next.ayat !== progress.ayat) {
+        await appendHistoryEntry(
+          createHistoryEntry('bangla', progress.surah, progress.ayat, next.surah, next.ayat, todayKey),
+        ).catch(() => undefined);
+      }
       router.back();
     } catch {
       setSaving(false);

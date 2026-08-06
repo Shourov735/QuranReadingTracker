@@ -22,7 +22,9 @@ import {
   setArabicProgress as persistArabicProgress,
   setReadingDays as persistReadingDays,
 } from '../services/progress-storage';
+import { appendHistoryEntry } from '../services/history-storage';
 import type { ArabicProgress } from '../types/progress';
+import { createHistoryEntry } from '../types/history';
 
 const ALL_SURAHS = getAllSurahs();
 
@@ -62,7 +64,13 @@ export default function UpdateArabicScreen() {
       const next = setArabicProgress(progress, surahNumber, ruku);
       await persistArabicProgress(next);
       const days = await getReadingDays();
-      await persistReadingDays(recordReadingDay(days, 'arabic', formatDateKey(new Date())));
+      const todayKey = formatDateKey(new Date());
+      await persistReadingDays(recordReadingDay(days, 'arabic', todayKey));
+      if (next.surah !== progress.surah || next.ruku !== progress.ruku) {
+        await appendHistoryEntry(
+          createHistoryEntry('arabic', progress.surah, progress.ruku, next.surah, next.ruku, todayKey),
+        ).catch(() => undefined);
+      }
       router.back();
     } catch {
       setSaving(false);

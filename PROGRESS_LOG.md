@@ -435,4 +435,78 @@ of the session, in this format:
 
 ---
 
+## Phase 8 — Reading History & Statistics (2026-08-06)
+- Built: A real reading-history log on top of Phase 2's boolean reading-days
+  record. `types/history.ts` defines `HistoryEntry` (`id`, `date` YYYY-MM-DD,
+  `track`, `fromSurah`/`fromPosition`, `toSurah`/`toPosition`; position =
+  ruku for Arabic, ayat for Bangla) plus a `createHistoryEntry` factory
+  (timestamp+random id, params track→from→to→date).
+  `services/history-storage.ts` is the only file touching the
+  `quran-reading-tracker:history` key: `appendHistoryEntry` (read-modify-write,
+  append at end) and `getHistoryEntries` (validates every entry — structural
+  checks, surah-range via `getAllSurahs().length`, track enum — corrupt
+  storage falls back to `[]`, and returns the list reversed = newest first,
+  with same-day entries in reverse insertion order since the type has no
+  timestamp). All four progress-mutation call sites now append an entry when
+  progress actually changes: Home's quick-update handlers (Phase 4) skip when
+  `advance*` no-ops on a completed track, and both update-screen save handlers
+  (Phase 5) skip when the user saves identical surah/position values.
+  `domain/progress-logic.ts` gains `calculateLongestStreak(readingDays)` —
+  same both-tracks-same-day rule as Phase 3's `calculateStreak`, but the
+  longest consecutive run in the whole record. `app/history.tsx` replaces the
+  Phase 0 stub: a stats card (current streak, longest streak, total distinct
+  reading days, Arabic completions, Bangla completions — the last two from the
+  tracks' lifetime `completedCount` records) above a `SectionList` grouped by
+  date ("Today"/"Yesterday"/locale date headers), newest first, each entry a
+  white card like "Arabic: Al-Baqarah Ruku 11 → 12" (cross-surah advances
+  render "…Ruku 40 → Aal-Imran Ruku 1"), refetched on focus via
+  `useFocusEffect` like Home.
+- Files: `types/history.ts` (new), `services/history-storage.ts` (new),
+  `domain/progress-logic.ts` (+`calculateLongestStreak`), `app/index.tsx`,
+  `app/update-arabic.tsx`, `app/update-bangla.tsx` (history append in
+  handlers), `app/history.tsx` (rewritten).
+- Decisions/deviations: History appends are wrapped in their own
+  `.catch(() => undefined)` AFTER the progress/reading-days persists succeed —
+  a history-write failure must not surface the "Update failed" alert for a
+  save that actually worked (that alert would send the user re-tapping and
+  double-advancing); the auxiliary log is allowed to be lost silently.
+  The "progress changed" test differs per call site: reference inequality
+  (`next !== progress`) on Home because `advanceRuku`/`advanceAyat` return the
+  input unchanged on the completed no-op, but a NEW object on the completion
+  transition (surah/ruku identical, `completed` flips) which must still be
+  logged; value comparison (`next.surah !== progress.surah ||
+  next.ruku !== progress.ruku`) on the update screens because `set*` always
+  stamps a new `lastUpdatedAt` and would otherwise log "Ruku 5 → 5" for a
+  no-change save. Completing the Quran logs an entry with from == to
+  ("An-Nas Ruku 3 → 3") since the type has no completed flag — it records the
+  final tap; the completion itself is visible via `completedCount` in the
+  stats. `SectionList` rather than a flat `FlatList` because date grouping is
+  its native shape; no pagination, search, or charts per scope. Stats live at
+  the top of the History screen (not a separate screen). Reset (Home/Settings)
+  still doesn't log history and doesn't touch reading days — a reset isn't a
+  reading update, consistent with Phase 4/7. Storage file duplicates
+  progress-storage's tiny read/write helpers rather than exporting them —
+  keeps each service self-contained, consistent with the existing file.
+- Next phase should know: Verified with a throwaway script (mock AsyncStorage
+  via a fake node_modules package, compiled with the project's own tsc to
+  /tmp/opencode, run with plain node, deleted — not shipped): 11
+  `calculateLongestStreak` cases (empty, single day, one-track-only days,
+  consecutive runs, gaps, two runs, shuffled order, month and year
+  boundaries, one-track days interrupting a run) and the storage round-trip
+  (fresh empty, append order, newest-first read, unique ids, chronological
+  raw storage, corruption fallback, completion-style same-from/to entry).
+  `calculateStreak` output unchanged. `npx tsc --noEmit` passes; `expo lint`
+  still not runnable (no ESLint config). History entries have no timestamp —
+  same-day ordering is insertion order reversed; if a future phase needs
+  precise intra-day ordering, the entry type needs a `createdAt` field. If
+  the history list ever needs >1k entries, cap the stored array in
+  `getHistoryEntries`. No changes to Settings, notifications, or `_layout` —
+  no regression risk there. Acceptance criteria NOT yet verified in Expo Go
+  on a device — that's the owner's manual step: tap quick-updates on Home /
+  save edits on both update screens and confirm entries appear in History
+  immediately in newest-first order, hand-check the stats against a few
+  simulated days (temporarily editing stored dates in Expo Go's AsyncStorage
+  or advancing the device clock), and confirm the empty-state message shows
+  on a fresh install.
 
+---

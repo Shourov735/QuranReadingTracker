@@ -193,3 +193,26 @@ export function calculateStreak(readingDays: ReadingDay[]): number {
   }
   return streak;
 }
+
+export function calculateLongestStreak(readingDays: ReadingDay[]): number {
+  const bothUpdatedDates = readingDays
+    .filter((day) => day.arabicUpdated && day.banglaUpdated)
+    .map((day) => day.date)
+    .sort();
+  if (bothUpdatedDates.length === 0) {
+    return 0;
+  }
+  let longest = 1;
+  let currentRun = 1;
+  for (let index = 1; index < bothUpdatedDates.length; index += 1) {
+    if (previousDateKey(bothUpdatedDates[index]) === bothUpdatedDates[index - 1]) {
+      currentRun += 1;
+    } else {
+      currentRun = 1;
+    }
+    if (currentRun > longest) {
+      longest = currentRun;
+    }
+  }
+  return longest;
+}

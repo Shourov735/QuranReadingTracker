@@ -28,7 +28,9 @@ import {
   setBanglaProgress as persistBanglaProgress,
   setReadingDays as persistReadingDays,
 } from '../services/progress-storage';
+import { appendHistoryEntry } from '../services/history-storage';
 import type { ArabicProgress, BanglaProgress, ReadingDays } from '../types/progress';
+import { createHistoryEntry } from '../types/history';
 
 const navigationLinks = [
   { href: '/update-arabic', label: 'Update Arabic Reading' },
@@ -68,12 +70,25 @@ export default function HomeScreen() {
       return;
     }
     try {
+      const todayKey = formatDateKey(new Date());
       const next = advanceRuku(arabicProgress);
       await persistArabicProgress(next);
-      const nextDays = recordReadingDay(readingDays, 'arabic', formatDateKey(new Date()));
+      const nextDays = recordReadingDay(readingDays, 'arabic', todayKey);
       await persistReadingDays(nextDays);
       setArabicProgress(next);
       setReadingDays(nextDays);
+      if (next !== arabicProgress) {
+        await appendHistoryEntry(
+          createHistoryEntry(
+            'arabic',
+            arabicProgress.surah,
+            arabicProgress.ruku,
+            next.surah,
+            next.ruku,
+            todayKey,
+          ),
+        ).catch(() => undefined);
+      }
     } catch {
       Alert.alert('Update failed', 'Your progress could not be saved. Please try again.');
     }
@@ -84,12 +99,25 @@ export default function HomeScreen() {
       return;
     }
     try {
+      const todayKey = formatDateKey(new Date());
       const next = advanceAyat(banglaProgress);
       await persistBanglaProgress(next);
-      const nextDays = recordReadingDay(readingDays, 'bangla', formatDateKey(new Date()));
+      const nextDays = recordReadingDay(readingDays, 'bangla', todayKey);
       await persistReadingDays(nextDays);
       setBanglaProgress(next);
       setReadingDays(nextDays);
+      if (next !== banglaProgress) {
+        await appendHistoryEntry(
+          createHistoryEntry(
+            'bangla',
+            banglaProgress.surah,
+            banglaProgress.ayat,
+            next.surah,
+            next.ayat,
+            todayKey,
+          ),
+        ).catch(() => undefined);
+      }
     } catch {
       Alert.alert('Update failed', 'Your progress could not be saved. Please try again.');
     }
