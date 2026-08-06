@@ -510,3 +510,62 @@ of the session, in this format:
   on a fresh install.
 
 ---
+
+## Phase 9 — Dark Mode & Theming (2026-08-06)
+- Built: Light/dark theming across the whole app. `theme/colors.ts` defines
+  the audited palette (`ThemeColors`: background, surface, border,
+  textPrimary, textSecondary, accent, accentText, destructive,
+  destructiveText) — light values are exactly the colors the screens already
+  used (`#F7F8FA`/`#FFFFFF`/`#E5E7EB`/`#208AEF`/`#DC2626`, so light mode is
+  pixel-identical to before); dark is a slate-based scheme with a brighter
+  blue accent (`#3B9BFF`) and softer red (`#F87171`). `theme/theme-context.tsx`
+  provides `ThemeProvider` + `useTheme()`: defaults to the device scheme via
+  `useColorScheme` ("System"), overridable to Light/Dark, and persists the
+  override through the new `services/theme-storage.ts` (namespaced
+  `quran-reading-tracker:theme-preference` key, corrupt/absent → "system").
+  `app/_layout.tsx` wraps the Stack in `ThemeProvider`, themes the native
+  header (`headerStyle`/`headerTintColor`/`headerTitleStyle`/
+  `contentStyle`), and sets `<StatusBar>` to light/dark per effective mode.
+  Every screen and `ProgressCard` now derives its styles from the theme via a
+  per-file `createStyles(colors)` factory + `useMemo` — a repo-wide grep
+  confirms zero hardcoded hex colors left in any `.tsx`. Settings gains an
+  "Appearance" section (System/Light/Dark segmented control; selected option
+  fills with the accent) between Daily Reminder and Reset Progress.
+- Files: `theme/colors.ts` (new), `theme/theme-context.tsx` (new),
+  `services/theme-storage.ts` (new), `theme/.gitkeep` (removed), and all six
+  screens/`_layout.tsx`/`components/ProgressCard.tsx` (themed).
+- Decisions/deviations: Secondary/muted text (section titles, hints, body
+  copy) previously relied on `opacity` modifiers over black; those are
+  replaced with explicit `textSecondary` colors so dark mode has full
+  contrast control. `app.json` already had `userInterfaceStyle: "automatic"`
+  (SDK template default), no change needed. expo-router's navigation
+  container defaults to the light react-navigation theme and does NOT
+  auto-swap on system scheme changes, so the header is themed via explicit
+  Stack screen options from our own context — this also makes the header
+  follow a user override (e.g. Light on a dark device) instead of the
+  system. A `@react-navigation/native` ThemeProvider wrapper was considered
+  and rejected: it's a transitive dependency and per-screen options are
+  simpler. Persisting the preference failure is swallowed (applied for the
+  session anyway) — one-line comment justifies it per AGENTS.md. The
+  Android surah/ruku picker dialog is native and follows the device theme,
+  untouched per "no per-component custom themes". `Alert` dialogs are native
+  too. The `opacity: 0.5` on the disabled Save button is a state, not a
+  color, and stays.
+- Next phase should know: `npx tsc --noEmit` passes; `expo lint` still not
+  runnable (no ESLint config). There is a brief light-theme flash on cold
+  start before the stored preference loads from AsyncStorage — acceptable
+  for v1 (async read is milliseconds). If a future phase adds screens,
+  follow the established pattern: `useTheme()` + `createStyles(colors)` +
+  `useMemo`; the picker `style` includes `color: colors.textPrimary` for iOS
+  inline text. The theme preference is a separate storage service from
+  progress/history — if a future backup/restore phase arrives, include the
+  `:theme-preference` key. The dark accent (`#3B9BFF`) and destructive
+  (`#F87171`) deliberately differ from light values — keep them in the
+  palette, not hardcoded in screens. Acceptance criteria NOT yet verified in
+  Expo Go on a device — that's the owner's manual step: flip the device
+  system theme with the app on "System", pick Light/Dark in Settings, kill
+  and relaunch to confirm the override persists, and eyeball every screen in
+  both themes (Home, both update screens with pickers open, History, and
+  Settings including the completed-card state).
+
+---

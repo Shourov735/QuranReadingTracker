@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import ProgressCard from '../components/ProgressCard';
 import { getSurahByNumber } from '../data/quran-metadata';
+import type { ThemeColors } from '../theme/colors';
+import { useTheme } from '../theme/theme-context';
 import {
   advanceAyat,
   advanceRuku,
@@ -40,6 +42,8 @@ const navigationLinks = [
 ] as const;
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [arabicProgress, setArabicProgress] = useState<ArabicProgress | null>(null);
   const [banglaProgress, setBanglaProgress] = useState<BanglaProgress | null>(null);
   const [readingDays, setReadingDays] = useState<ReadingDays>({});
@@ -231,66 +235,69 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F7F8FA',
-  },
-  content: {
-    padding: 16,
-    gap: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  streakBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
-  },
-  streakNumber: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: '#208AEF',
-  },
-  streakLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  streakHint: {
-    fontSize: 13,
-    opacity: 0.6,
-    marginTop: 2,
-  },
-  navigationSection: {
-    gap: 8,
-  },
-  navigationTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    opacity: 0.6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  navigationLink: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  navigationLinkLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#208AEF',
-    textAlign: 'center',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 16,
+      gap: 16,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    streakBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+    },
+    streakNumber: {
+      fontSize: 40,
+      fontWeight: '800',
+      color: colors.accent,
+    },
+    streakLabel: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    streakHint: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    navigationSection: {
+      gap: 8,
+    },
+    navigationTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    navigationLink: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    navigationLinkLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.accent,
+      textAlign: 'center',
+    },
+  });
+}

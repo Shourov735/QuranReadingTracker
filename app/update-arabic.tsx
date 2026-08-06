@@ -1,6 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +11,8 @@ import {
   View,
 } from 'react-native';
 import { getAllSurahs, getSurahByNumber } from '../data/quran-metadata';
+import type { ThemeColors } from '../theme/colors';
+import { useTheme } from '../theme/theme-context';
 import {
   formatDateKey,
   recordReadingDay,
@@ -29,6 +31,8 @@ import { createHistoryEntry } from '../types/history';
 const ALL_SURAHS = getAllSurahs();
 
 export default function UpdateArabicScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [progress, setProgress] = useState<ArabicProgress | null>(null);
   const [surahNumber, setSurahNumber] = useState(1);
   const [ruku, setRuku] = useState(1);
@@ -132,52 +136,55 @@ export default function UpdateArabicScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F7F8FA',
-  },
-  content: {
-    padding: 16,
-    gap: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  field: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-    opacity: 0.6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  pickerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  picker: {
-    height: 52,
-  },
-  saveButton: {
-    backgroundColor: '#208AEF',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveButtonLabel: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 16,
+      gap: 16,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    field: {
+      gap: 6,
+    },
+    label: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    pickerContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    picker: {
+      height: 52,
+      color: colors.textPrimary,
+    },
+    saveButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    saveButtonDisabled: {
+      opacity: 0.5,
+    },
+    saveButtonLabel: {
+      color: colors.accentText,
+      fontSize: 16,
+      fontWeight: '700',
+    },
+  });
+}

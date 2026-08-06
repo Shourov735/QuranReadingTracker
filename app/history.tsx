@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
@@ -18,6 +18,8 @@ import {
   getBanglaProgress,
   getReadingDays,
 } from '../services/progress-storage';
+import type { ThemeColors } from '../theme/colors';
+import { useTheme } from '../theme/theme-context';
 import type { HistoryEntry } from '../types/history';
 import type { ArabicProgress, BanglaProgress, ReadingDays } from '../types/progress';
 
@@ -27,6 +29,8 @@ interface HistorySection {
 }
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
   const [readingDays, setReadingDays] = useState<ReadingDays | null>(null);
   const [arabicProgress, setArabicProgress] = useState<ArabicProgress | null>(null);
@@ -139,6 +143,8 @@ function isSameLocalDay(a: Date, b: Date): boolean {
 }
 
 function HistoryRow({ entry }: { entry: HistoryEntry }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const trackLabel = entry.track === 'arabic' ? 'Arabic' : 'Bangla';
   const positionLabel = entry.track === 'arabic' ? 'Ruku' : 'Ayat';
   const fromSurahName = getSurahByNumber(entry.fromSurah).nameTransliteration;
@@ -156,6 +162,8 @@ function HistoryRow({ entry }: { entry: HistoryEntry }) {
 }
 
 function StatRow({ label, value }: { label: string; value: number }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.statRow}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -164,87 +172,91 @@ function StatRow({ label, value }: { label: string; value: number }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F7F8FA',
-  },
-  content: {
-    padding: 16,
-    gap: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
-    gap: 10,
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statLabel: {
-    fontSize: 14,
-    opacity: 0.75,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#208AEF',
-  },
-  sectionHeader: {
-    fontSize: 13,
-    fontWeight: '700',
-    opacity: 0.6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 8,
-  },
-  entryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginTop: 8,
-  },
-  entryTrack: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#208AEF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  entryChange: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  emptyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
-    marginTop: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 16,
+      gap: 16,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    statsCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+      gap: 10,
+    },
+    statsTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      marginBottom: 2,
+    },
+    statRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    statLabel: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    statValue: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.accent,
+    },
+    sectionHeader: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginTop: 8,
+    },
+    entryCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      marginTop: 8,
+    },
+    entryTrack: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.accent,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    entryChange: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.textPrimary,
+      marginTop: 2,
+    },
+    emptyCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+      marginTop: 8,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+  });
+}
