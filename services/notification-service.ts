@@ -28,6 +28,10 @@ setNotificationHandler({
   }),
 });
 
+export function getReminderTimeLabel(): string {
+  return `${String(REMINDER_HOUR).padStart(2, '0')}:${String(REMINDER_MINUTE).padStart(2, '0')}`;
+}
+
 let reconcileInFlight: Promise<void> | null = null;
 
 export function ensureDailyReminderScheduled(): Promise<void> {

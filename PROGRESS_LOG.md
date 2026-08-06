@@ -392,3 +392,47 @@ of the session, in this format:
 
 ---
 
+## Phase 7 — Settings Screen (2026-08-06)
+- Built: Real Settings screen (`app/settings.tsx`), replacing the Phase 0
+  stub, styled to match Home/update screens (light background, white cards,
+  blue accent, red destructive reset buttons). Three sections: (1) Daily
+  Reminder — shows the current fixed reminder time as large read-only text
+  with a note that a custom time comes in a future version; (2) Reset
+  Progress — two separate controls, one per track, each with an Alert
+  confirm (Cancel leaves progress untouched, destructive Reset persists via
+  `resetArabicProgress`/`resetBanglaProgress` through the Phase 2 storage
+  layer) and a note that `completedCount` is kept; (3) About — app name,
+  one-line description, and a "GitHub Repository" button using plain
+  `Linking.openURL`. Progress is loaded once on mount; the screen shows a
+  spinner until both tracks load.
+- Files: `app/settings.tsx` (rewritten), `services/notification-service.ts`
+  (+`getReminderTimeLabel()`, exported so Settings shows the time derived
+  from the same `REMINDER_HOUR`/`REMINDER_MINUTE` constants instead of
+  duplicating 18:30).
+- Decisions/deviations: The displayed time is derived from the
+  notification service's private constants via a new exported
+  `getReminderTimeLabel()` — when a future phase makes the time editable,
+  Settings will show the real value with zero drift. Importing the
+  notification service from a screen is safe: its module-level
+  `setNotificationHandler` call is idempotent (already runs once at app
+  launch from the root layout). Reset controls are enabled for non-completed
+  tracks too (unlike Home, which only offers reset on the completed card) —
+  the phase prompt says Settings is the reset home, no gating mentioned.
+  Reset does NOT call `recordReadingDay`, matching Home's existing decision
+  (a reset isn't a reading update, so it must not extend the streak).
+  `lastUpdatedAt` stamps on reset come from the domain functions unchanged.
+- Next phase should know: Typecheck `npx tsc --noEmit` passes. Settings
+  reads progress once on mount — fine here because Home refetches on focus
+  and Settings itself is the only mutator while focused; if a future phase
+  lets another screen change progress while Settings sits in the stack
+  behind it, switch to `useFocusEffect` like Home. `getReminderTimeLabel`
+  is exported from `services/notification-service.ts` for reuse by any
+  future editable-time UI. Acceptance criteria NOT yet verified in Expo Go
+  on a device — that's the owner's manual step: time shows 18:30, both
+  reset dialogs cancel cleanly, Arabic reset moves Home's Arabic card back
+  to Surah 1/Ruku 1 while Bangla is untouched (and vice versa), and the
+  GitHub button opens the repo.
+
+---
+
+
