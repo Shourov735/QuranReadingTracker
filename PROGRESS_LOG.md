@@ -196,6 +196,7 @@ of the session, in this format:
 ---
 
 ## Phase 4 — Home Screen (Progress Overview) (2026-08-06)
+
 - Built: The real Home screen (`app/index.tsx`), replacing the Phase 0 stub.
   On load it reads Arabic progress, Bangla progress, and reading days from the
   Phase 2 storage layer and renders, per track: current Surah (Arabic name +
@@ -241,6 +242,54 @@ of the session, in this format:
   An-Nas/Ayat 114 quickly via the quick-update buttons, or use
   `setArabicProgress`/`setBanglaProgress` with a throwaway script to jump to
   surah 113/114 to test completion without 114 surahs of tapping).
+
+---
+
+## Phase 5 — Manual Update Screens (2026-08-06)
+- Built: Real Update Arabic and Update Bangla screens, replacing the Phase 0
+  stubs. Each loads the track's current stored progress on mount, pre-fills
+  a Surah picker (all 114, "2. Al-Baqarah" style transliteration labels) and a
+  Ruku/Ayat picker whose range comes from the selected surah's
+  `totalRuku`/`totalAyat`. Changing the surah clamps the ruku/ayat selection to
+  the new surah's max, so it can never stay out of range (e.g. An-Nas, 1 ruku).
+  Save calls the Phase 3 domain `setArabicProgress`/`setBanglaProgress`
+  (clearing `completed`, keeping `completedCount` — so editing a completed
+  track un-freezes it with no extra screen-side logic), persists via the
+  Phase 2 storage layer, calls `recordReadingDay` for the track with today's
+  `formatDateKey` date, persists the days, and navigates back to Home. Save
+  errors surface as an Alert; the button shows "Saving..." and is disabled
+  mid-persist. Home now refetches on focus (`useFocusEffect`) so a returned
+  save shows immediately — this is the fix Phase 4's log flagged as needed.
+- Files: `app/update-arabic.tsx`, `app/update-bangla.tsx` (rewritten),
+  `app/index.tsx` (useEffect → useFocusEffect), `package.json`,
+  `package-lock.json` (+`@react-native-picker/picker@2.11.4`, SDK 57
+  compatible, via `npx expo install`).
+- Decisions/deviations: The two screens are deliberately separate files with
+  duplicated structure rather than a shared component — the phase prompt says
+  "mirrored", and a shared abstraction would need union-type plumbing the
+  prompt didn't ask for. Ruku/Ayat clamp rule: keep the current selection when
+  it's still valid for the newly picked surah, otherwise drop it to the new
+  max — simplest inline rule satisfying the range invariant. Reading days are
+  re-read from storage at save time (not cached from mount) so the
+  `recordReadingDay` write is never based on stale days. The loaded progress
+  object itself is held in state and used as the base for the domain `set*`
+  call — re-fetching it wasn't needed since the stack guarantees Home can't
+  mutate progress while this screen is focused. Picker uses the library's
+  platform defaults (Android dialog mode, no `mode` prop) — 114 items scroll
+  fine in the dialog. The `surahNumber`/`ruku` state defaults (1/1) are never
+  visible before load because the screen renders a spinner until the stored
+  progress arrives.
+- Next phase should know: Typecheck `npx tsc --noEmit` passes. `expo lint`
+  still not runnable (no ESLint config, per Phase 3). The ruku/ayat options
+  array is rebuilt on every surah change — fine at 40/286-item max, but if a
+  later phase adds search or thousands of options, memoize with `useMemo`.
+  Home's `useFocusEffect` now refetches on every focus, so future screens
+  that mutate progress will appear on Home automatically. `@react-native-picker/picker`
+  is the first picker dependency; it's included in Expo Go, no dev build
+  needed. Acceptance criteria NOT yet verified in Expo Go on a device — that's
+  the owner's manual step: pre-filled pickers, An-Nas ruku clamp, save → Home
+  updates instantly and survives app restart, and editing a completed track
+  un-freezes it.
 
 ---
 

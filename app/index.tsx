@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Link, useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
@@ -42,24 +42,26 @@ export default function HomeScreen() {
   const [banglaProgress, setBanglaProgress] = useState<BanglaProgress | null>(null);
   const [readingDays, setReadingDays] = useState<ReadingDays>({});
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const [arabic, bangla, days] = await Promise.all([
-        getArabicProgress(),
-        getBanglaProgress(),
-        getReadingDays(),
-      ]);
-      if (active) {
-        setArabicProgress(arabic);
-        setBanglaProgress(bangla);
-        setReadingDays(days);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const [arabic, bangla, days] = await Promise.all([
+          getArabicProgress(),
+          getBanglaProgress(),
+          getReadingDays(),
+        ]);
+        if (active) {
+          setArabicProgress(arabic);
+          setBanglaProgress(bangla);
+          setReadingDays(days);
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   const handleMarkArabicDone = useCallback(async () => {
     if (arabicProgress === null) {
