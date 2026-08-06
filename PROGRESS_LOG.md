@@ -195,3 +195,52 @@ of the session, in this format:
 
 ---
 
+## Phase 4 — Home Screen (Progress Overview) (2026-08-06)
+- Built: The real Home screen (`app/index.tsx`), replacing the Phase 0 stub.
+  On load it reads Arabic progress, Bangla progress, and reading days from the
+  Phase 2 storage layer and renders, per track: current Surah (Arabic name +
+  transliteration via `getSurahByNumber`), current Ruku/Ayat with the surah's
+  total, and last-updated as "Today"/"Yesterday"/a locale date (or "Never"
+  before the first update). Completed tracks show a distinct card
+  ("Alhamdulillah — you've completed the Quran in Arabic 🎉", completedCount)
+  with no quick-update button and a confirm-then-reset "Start New Cycle" button
+  (Alert with Cancel/Reset, then `resetArabicProgress`/`resetBanglaProgress`).
+  Quick-update buttons ("Mark Ruku done"/"Mark Ayat done") call
+  `advanceRuku`/`advanceAyat`, persist via the storage layer, call
+  `recordReadingDay` for the track with today's `formatDateKey` date, persist
+  the days, and set local state so the screen updates instantly. A streak
+  banner shows `calculateStreak(Object.values(readingDays))` as a number +
+  label. Navigation links to Update Arabic, Update Bangla, History, and
+  Settings (still stubs) are at the bottom under a "More" section.
+  `components/ProgressCard.tsx` is a new presentational card used for both
+  tracks.
+- Files: `app/index.tsx` (rewritten), `components/ProgressCard.tsx` (new).
+- Decisions/deviations: The card is deliberately presentational — it receives
+  already-derived values (surah meta, position, total, lastUpdatedAt) rather
+  than progress objects, keeping it track-agnostic without union-type
+  narrowing in JSX. The human-readable date helper (`Today`/`Yesterday`/
+  locale date, local-time comparison) lives in the component file — it's pure
+  presentation, so it stays out of `domain/`. Reset does NOT call
+  `recordReadingDay`: the streak counts only days where both tracks were
+  *updated*, and a reset isn't an update (Phase 3's `calculateStreak` treats
+  the day as qualifying only via `arabicUpdated`/`banglaUpdated`). Quick-update
+  buttons aren't disabled mid-persist (fast double-taps could double-advance,
+  acceptable for v1 manual use). Storage write errors surface as an Alert
+  ("Update failed"/"Reset failed") per Phase 2's "callers decide" note; state
+  only updates after a successful persist. Styling is inline in the screen
+  (light-theme colors, blue `#208AEF` accent matching the stubs) — no `theme/`
+  file yet, since dark mode is Phase 9.
+- Next phase should know: Home state is loaded once on mount — when Phase 5
+  makes Update Arabic/Bangla real screens, Home needs a refetch-on-focus
+  (e.g. `useFocusEffect`) or those screens' changes won't show until the app
+  reloads. The completed-state card's "Start New Cycle" flow already exists and
+  is ready to be reused by the update screens if needed. The streak banner is
+  ready for the Phase 6 reminder/notification wiring (no changes needed).
+  Typecheck: `npx tsc --noEmit` passes. Acceptance criteria NOT yet verified
+  in Expo Go on a device — that's the owner's manual step (advance through
+  An-Nas/Ayat 114 quickly via the quick-update buttons, or use
+  `setArabicProgress`/`setBanglaProgress` with a throwaway script to jump to
+  surah 113/114 to test completion without 114 surahs of tapping).
+
+---
+
