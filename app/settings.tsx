@@ -91,8 +91,12 @@ export default function SettingsScreen() {
     [performReset],
   );
 
-  const openGitHub = useCallback(() => {
-    void Linking.openURL(GITHUB_URL);
+  const openGitHub = useCallback(async () => {
+    try {
+      await Linking.openURL(GITHUB_URL);
+    } catch {
+      Alert.alert('Could not open link', 'The GitHub repository could not be opened.');
+    }
   }, []);
 
   if (arabicProgress === null || banglaProgress === null) {
@@ -173,7 +177,7 @@ export default function SettingsScreen() {
           <Text style={styles.cardBody}>
             Track your daily Quran reading in Arabic and Bangla — offline, on your device.
           </Text>
-          <Pressable style={styles.linkButton} onPress={openGitHub}>
+          <Pressable style={styles.linkButton} onPress={() => void openGitHub()}>
             <Text style={styles.linkButtonLabel}>GitHub Repository</Text>
           </Pressable>
         </View>

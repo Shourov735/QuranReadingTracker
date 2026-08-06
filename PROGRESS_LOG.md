@@ -569,3 +569,88 @@ of the session, in this format:
   Settings including the completed-card state).
 
 ---
+
+## Phase 10 — Polish, Edge Cases & Release Prep (2026-08-06)
+- Built: Final hardening pass — no new features. (1) Loading states: audited
+  every screen; all five already gate rendering on `null` state with an
+  `ActivityIndicator` until their AsyncStorage data arrives (Home/History via
+  `useFocusEffect`, Settings and both update screens via `useEffect`), so
+  there is no flash of default/empty data — nothing to add. (2) Empty/first-run
+  states: audited — fresh install renders the Phase 2 defaults everywhere
+  (Surah 1/Ruku 1, "Never", streak 0) and History shows its empty-state card;
+  no UI changes needed. (3) Error resilience: full audit of every
+  AsyncStorage read/write and picker interaction — reads all catch internally
+  and fall back to defaults (`readJson` in progress/history storage,
+  `getThemePreference`), all writes are wrapped in try/catch with a
+  user-facing Alert, history appends are silently caught, the notification
+  service is fully guarded, and `getSurahByNumber` in picker handlers only
+  ever receives values from the picker's own items (1–114) or validated
+  storage. One real gap fixed: Settings' GitHub button fired
+  `Linking.openURL` unhandled — a failure (no browser handler) would have
+  been an unhandled promise rejection; it now catches and shows an Alert.
+  (4) App identity: replaced ALL default Expo template branding.
+  `app.json` name is now "Quran Reading Tracker" (slug
+  `quran-reading-tracker`, deep-link scheme unchanged). Custom placeholder
+  artwork generated (accent-blue `#208AEF` background + white open-book
+  glyph): `icon.png` (1024), `android-icon-foreground.png` (512, glyph only),
+  `android-icon-monochrome.png` (432, glyph only), `splash-icon.png`
+  (228×213, glyph on transparent), `favicon.png` (48). The Android adaptive
+  icon switched from the template's background-image to
+  `backgroundColor: "#208AEF"` + the custom foreground/monochrome, and the
+  template background image asset was deleted. The SDK 57 iOS liquid-glass
+  icon (`assets/expo.icon/`) had its Expo "E" SVG replaced with the same
+  book glyph (`book-symbol.svg`) and the template grid layer removed from
+  `icon.json`. (5) `README.md` rewritten: what the app does, feature list,
+  tech stack, how to run (Expo Go on a physical device, no emulator), folder
+  structure, and a section explaining the phased-build approach via
+  `AGENTS.md` + `PROGRESS_LOG.md`.
+- Files: `app.json`, `README.md` (rewritten), `app/settings.tsx`
+  (openGitHub catch), all image assets in `assets/images/` (regenerated),
+  `assets/expo.icon/icon.json` + `Assets/` (Expo logo SVG and grid removed,
+  `book-symbol.svg` added), `PROGRESS_LOG.md`. Removed:
+  `assets/images/android-icon-background.png` (no longer referenced),
+  `assets/expo.icon/Assets/expo-symbol 2.svg`, `assets/expo.icon/Assets/grid.png`.
+- Decisions/deviations: Artwork is a deliberately simple placeholder — a
+  white open-book glyph on the app's accent blue, drawn programmatically
+  (PIL, supersampled for antialiasing); the goal was "no default Expo
+  branding", not final design — a designer can drop in real art later with
+  zero code changes. The iOS `expo.icon` folder name is an SDK 57 tooling
+  convention (the icon definition directory), not branding — the contents,
+  not the folder name, were what carried the Expo logo. The slug change
+  (`QuranReadingTracker` → `quran-reading-tracker`) is safe pre-release: no
+  builds or share links exist yet, and it doesn't affect the `scheme`
+  (`quranreadingtracker`). `app.json` splash config (blue background, white
+  glyph, `imageWidth: 76`) was already custom-safe and only applies to real
+  builds — Expo Go shows its own splash, which is expected. The known light-
+  theme flash on cold start while the stored theme preference loads
+  (documented in Phase 9) was left as-is: it's a milliseconds-level async
+  read, not a "flash of missing data", and fixing it would require
+  `preventAutoHideAsync` splash wiring beyond this phase's scope.
+- Overall project state: All planned features are complete and the tree is
+  clean. Static verification this phase: `npx tsc --noEmit` passes, `npx
+  expo config --type public` validates the new app identity, and a full
+  read-through of every screen/service/domain module found no unhandled
+  failure paths. Known limitations for the future-features list: editable
+  reminder time; reminder cancel mid-session only takes effect on next
+  foreground; single-day reminder gap if the user reads both tracks then
+  doesn't open the app the next day (documented Phase 6); History entries
+  have no timestamp (same-day order is insertion-reversed, Phase 8); the
+  brief cold-start theme flash; double-tap quick-updates can double-advance
+  (buttons not disabled mid-persist); history list has no size cap; slug/
+  name now finalized if a build is ever created.
+- Next phase should know: There is no next phase in the initial build — this
+  is the release pass. The manual regression checklist below is the owner's
+  device pass. If future work resumes, watch the Phase 0 reanimated pin
+  (4.5.0/0.10.0) — do not `expo install --fix` until Expo Go ships
+  4.5.1/0.10.1 — and the expo-notifications deep-import workaround (Phase 6
+  follow-up) which must be revisited if that package restructures.
+- Manual regression checklist (owner, Expo Go on device): fresh install
+  (clear Expo Go data) → Home shows Surah 1/Ruku 1 + Ayat 1, "Never", streak
+  0; advance Arabic through a surah rollover (Al-Baqarah Ruku 40 → Aal-Imran
+  Ruku 1) and Bangla through a full-surah rollover; jump to Surah 114 via the
+  update screens and tap through to completion → celebration card + count +1,
+  no auto-advance; reset both tracks; save an edit on both update screens and
+  check Home + History update on return; verify History order, grouping, and
+  stats vs. what was tapped; temporarily move REMINDER_HOUR/MINUTE to confirm
+  the notification fires (revert to 18/30); toggle System/Light/Dark in
+  Settings and relaunch; eyeball every screen in both themes.
