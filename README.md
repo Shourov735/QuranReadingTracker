@@ -101,11 +101,10 @@ consumes free-tier build quota.
 
 ### Download the APK
 
-Prefer to skip the build? A signed APK with all Phase 13 features is available
-for direct download:
+Prefer to skip the build? A signed APK with all Phase 15 features (including full Android 13+ notification permissions, high-priority heads-up reminders, and instant test notification trigger) is available for direct download:
 
-- **Direct Download**: <https://expo.dev/artifacts/eas/7PhDPCRmLMoZ50Qv9hCXD9nVWPNp2oJHxmTakZd05k4.apk>
-- **Build Page & QR Code**: <https://expo.dev/accounts/shourov735s-team/projects/quran-reading-tracker/builds/c61133f7-689d-479b-b1a3-bba2734ec1ef>
+- **Direct Download**: <https://expo.dev/artifacts/eas/Yb1-qZM8fy5baR-XZPRsEZLEMZs6i63AsNh4gQpwGzM.apk>
+- **Build Page & QR Code**: <https://expo.dev/accounts/shourov735s-team/projects/quran-reading-tracker/builds/7dabf5fa-f5af-480a-ac1d-0c9ce9b3ed63>
 
 Install it on any Android device (you may need to allow installs from unknown
 sources). The app runs standalone — Expo Go is not required.
