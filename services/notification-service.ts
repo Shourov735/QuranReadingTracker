@@ -1,15 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Device from 'expo-device';
+import { Platform } from 'react-native';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
-import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
-import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
+import { AndroidImportance, AndroidNotificationVisibility } from 'expo-notifications/build/NotificationChannelManager.types';
+import { SchedulableTriggerInputTypes, AndroidNotificationPriority } from 'expo-notifications/build/Notifications.types';
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 import { getAllScheduledNotificationsAsync } from 'expo-notifications/build/getAllScheduledNotificationsAsync';
 import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
-import { formatDateKey, isReadingDayComplete } from '../domain/progress-logic';
-import { getReadingDays } from './progress-storage';
 import type { ReminderSettings } from '../types/settings';
 import { createDefaultReminderSettings } from '../types/settings';
 
@@ -17,6 +15,7 @@ const REMINDER_SETTINGS_KEY = 'quran-reading-tracker:reminder-settings';
 const REMINDER_CHANNEL_ID = 'quran-reading-reminders';
 const DAILY_REMINDER_ID = 'quran-daily-reminder';
 const TOMORROW_REMINDER_ID = 'quran-tomorrow-reminder';
+const REMINDER_TITLE = 'Quran Reading Tracker';
 const REMINDER_BODY = "Don't forget to read the Qur'an today.";
 
 // Deep-import expo-notifications internals: its main entry eagerly registers a push-token listener, which throws in Expo Go on Android (SDK 53+).
@@ -29,6 +28,70 @@ setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+export async function setupNotificationChannel(): Promise<void> {
+  if (Platform.OS === 'android') {
+    await setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
+      name: 'Daily reading reminder',
+      description: 'Daily reminders to read Quran',
+      importance: AndroidImportance.MAX,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+      enableVibrate: true,
+      enableLights: true,
+      lightColor: '#208AEF',
+      showBadge: true,
+      lockscreenVisibility: AndroidNotificationVisibility.PUBLIC,
+    });
+  }
+}
+
+export async function checkNotificationPermissions(): Promise<boolean> {
+  try {
+    const permissions = await getPermissionsAsync();
+    return permissions.granted || permissions.status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+export async function requestNotificationPermissions(): Promise<boolean> {
+  try {
+    await setupNotificationChannel();
+    const existing = await getPermissionsAsync();
+    if (existing.granted || existing.status === 'granted') {
+      return true;
+    }
+    const requested = await requestPermissionsAsync();
+    return requested.granted || requested.status === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+export async function sendTestNotification(): Promise<boolean> {
+  try {
+    await setupNotificationChannel();
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) {
+      return false;
+    }
+    await scheduleNotificationAsync({
+      content: {
+        title: REMINDER_TITLE,
+        body: 'Daily reminders are working! You will receive notifications at your scheduled time.',
+        sound: 'default',
+        priority: AndroidNotificationPriority.HIGH,
+      },
+      trigger: {
+        channelId: REMINDER_CHANNEL_ID,
+      },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function getReminderSettings(): Promise<ReminderSettings> {
   try {
@@ -57,20 +120,7 @@ export async function setReminderSettings(settings: ReminderSettings): Promise<v
   await ensureDailyReminderScheduled();
 }
 
-export function formatReminderTime(hour: number, minute: number): string {
-  let h = hour % 12;
-  if (h === 0) {
-    h = 12;
-  }
-  const period = hour >= 12 ? 'PM' : 'AM';
-  return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
-}
-
-export function getReminderTimeLabel(settings?: ReminderSettings): string {
-  const hour = settings ? settings.hour : 18;
-  const minute = settings ? settings.minute : 30;
-  return formatReminderTime(hour, minute);
-}
+export { formatReminderTime, getReminderTimeLabel } from '../domain/progress-logic';
 
 let reconcileInFlight: Promise<void> | null = null;
 
@@ -86,9 +136,7 @@ export function ensureDailyReminderScheduled(): Promise<void> {
 
 async function reconcileReminderSchedule(): Promise<void> {
   try {
-    if (!Device.isDevice) {
-      return;
-    }
+    await setupNotificationChannel();
     const settings = await getReminderSettings();
     const scheduled = await getAllScheduledNotificationsAsync();
     const hasDaily = scheduled.some((request) => request.identifier === DAILY_REMINDER_ID);
@@ -104,37 +152,18 @@ async function reconcileReminderSchedule(): Promise<void> {
       return;
     }
 
-    const permission = await getPermissionsAsync();
-    if (permission.status === 'undetermined') {
-      const requested = await requestPermissionsAsync();
-      if (requested.status !== 'granted') {
-        return;
-      }
-    } else if (permission.status !== 'granted') {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) {
       return;
     }
 
-    await setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
-      name: 'Daily reading reminder',
-      importance: AndroidImportance.HIGH,
-    });
-
-    const readingDays = await getReadingDays();
-    const bothDoneToday = isReadingDayComplete(readingDays, formatDateKey(new Date()));
-
-    if (bothDoneToday) {
-      if (hasDaily) {
-        await cancelScheduledNotificationAsync(DAILY_REMINDER_ID);
-      }
+    if (hasTomorrow) {
       await cancelScheduledNotificationAsync(TOMORROW_REMINDER_ID);
-      await scheduleTomorrowReminder(settings.hour, settings.minute);
-    } else {
-      if (hasTomorrow) {
-        await cancelScheduledNotificationAsync(TOMORROW_REMINDER_ID);
-      }
-      await cancelScheduledNotificationAsync(DAILY_REMINDER_ID);
-      await scheduleDailyReminder(settings.hour, settings.minute);
     }
+    if (hasDaily) {
+      await cancelScheduledNotificationAsync(DAILY_REMINDER_ID);
+    }
+    await scheduleDailyReminder(settings.hour, settings.minute);
   } catch {
   }
 }
@@ -142,26 +171,16 @@ async function reconcileReminderSchedule(): Promise<void> {
 async function scheduleDailyReminder(hour: number, minute: number): Promise<void> {
   await scheduleNotificationAsync({
     identifier: DAILY_REMINDER_ID,
-    content: { body: REMINDER_BODY, sound: 'default' },
+    content: {
+      title: REMINDER_TITLE,
+      body: REMINDER_BODY,
+      sound: 'default',
+      priority: AndroidNotificationPriority.HIGH,
+    },
     trigger: {
       type: SchedulableTriggerInputTypes.DAILY,
       hour,
       minute,
-      channelId: REMINDER_CHANNEL_ID,
-    },
-  });
-}
-
-async function scheduleTomorrowReminder(hour: number, minute: number): Promise<void> {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(hour, minute, 0, 0);
-  await scheduleNotificationAsync({
-    identifier: TOMORROW_REMINDER_ID,
-    content: { body: REMINDER_BODY, sound: 'default' },
-    trigger: {
-      type: SchedulableTriggerInputTypes.DATE,
-      date: tomorrow,
       channelId: REMINDER_CHANNEL_ID,
     },
   });

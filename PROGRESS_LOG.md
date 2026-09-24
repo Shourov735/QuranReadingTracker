@@ -818,3 +818,41 @@ of the session, in this format:
   GitHub repository secrets if they wish to use GitHub Actions manual dispatch as well.
 - Suggested commit message: `phase-14: github integration and eas cicd workflows`
 
+---
+
+## Phase 15 — Android Notification Permissions & Scheduling Reliability (2026-09-24)
+- Built: Complete diagnosis and resolution of Android notification permission and delivery failure:
+  1. Android Manifest Permissions & Plugins: Added `android.permission.POST_NOTIFICATIONS`,
+     `android.permission.SCHEDULE_EXACT_ALARM`, `android.permission.RECEIVE_BOOT_COMPLETED`,
+     and `android.permission.VIBRATE` to `app.json`. Configured `expo-notifications` config plugin
+     with icon, accent color `#208AEF`, and default channel `quran-reading-reminders`.
+  2. Runtime Permission Fix: Fixed permission request flow on Android 13+ (API 33+) where
+     `getPermissionsAsync()` returned `status: 'denied'` before initial prompt, previously causing
+     the app to bypass `requestPermissionsAsync()`. Added robust `requestNotificationPermissions()`
+     and `checkNotificationPermissions()`.
+  3. High-Priority Notification Channel: Configured `setupNotificationChannel()` with
+     `AndroidImportance.MAX`, public lockscreen visibility, default sound, vibration pattern,
+     and light color so notifications pop up as heads-up banners on Android.
+  4. Scheduled Notification Payload: Added explicit notification title (`Quran Reading Tracker`)
+     and `priority: AndroidNotificationPriority.HIGH` to prevent Android OS/OEM battery managers
+     from discarding empty-title background alerts.
+  5. Schedule Recurrence Fix: Replaced one-time tomorrow date-trigger cancellation with permanent
+     daily recurring schedule at user-specified hour and minute (`SchedulableTriggerInputTypes.DAILY`).
+  6. Settings UI & Test Notification: Added real-time permission status badge (`✓ Notification permission allowed`
+     or `⚠️ Notification permission needed`), one-tap "Enable" button with fallback to system settings,
+     and an instant "Send Test Notification" button so users can verify notification delivery immediately.
+     Added `AppState` listener in Settings to auto-refresh permission status upon returning from system settings.
+  7. Pure Domain Separation & Testing: Moved `formatReminderTime` and `getReminderTimeLabel` to
+     `domain/progress-logic.ts` to strictly maintain the zero-RN-imports domain boundary; added Vitest
+     unit tests in `__tests__/notification-logic.test.ts` (21/21 passing tests).
+- Files: `app.json`, `services/notification-service.ts`, `domain/progress-logic.ts`,
+  `app/settings.tsx`, `__tests__/notification-logic.test.ts` (new), `PROGRESS_LOG.md`.
+- Decisions/deviations: Maintained zero-comment rule per AGENTS.md; preserved deep-imports of
+  `expo-notifications` internals to prevent push-token listener crashes in Expo Go Android;
+  re-exported time formatting functions from `services/notification-service.ts` for clean API backwards
+  compatibility.
+- Next phase should know: All 21 tests pass (`npm test`) and TypeScript compiles with 0 errors
+  (`npx tsc --noEmit`). On-device test notification button provides instant verification in preview APK.
+- Suggested commit message: `phase-15: fix android notification permissions and scheduling`
+
+

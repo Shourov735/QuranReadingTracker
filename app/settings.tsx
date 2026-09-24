@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Linking,
   Platform,
   Pressable,
@@ -20,8 +21,11 @@ import {
   setBanglaProgress as persistBanglaProgress,
 } from '../services/progress-storage';
 import {
+  checkNotificationPermissions,
   formatReminderTime,
   getReminderSettings,
+  requestNotificationPermissions,
+  sendTestNotification,
   setReminderSettings as persistReminderSettings,
 } from '../services/notification-service';
 import {
@@ -52,30 +56,36 @@ export default function SettingsScreen() {
   const [reminderSettings, setReminderSettingsState] = useState<ReminderSettings | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [testNotificationBusy, setTestNotificationBusy] = useState(false);
 
   const loadData = useCallback(async () => {
-    const [arabic, bangla, settings] = await Promise.all([
+    const [arabic, bangla, settings, granted] = await Promise.all([
       getArabicProgress(),
       getBanglaProgress(),
       getReminderSettings(),
+      checkNotificationPermissions(),
     ]);
     setArabicProgress(arabic);
     setBanglaProgress(bangla);
     setReminderSettingsState(settings);
+    setPermissionGranted(granted);
   }, []);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const [arabic, bangla, settings] = await Promise.all([
+      const [arabic, bangla, settings, granted] = await Promise.all([
         getArabicProgress(),
         getBanglaProgress(),
         getReminderSettings(),
+        checkNotificationPermissions(),
       ]);
       if (active) {
         setArabicProgress(arabic);
         setBanglaProgress(bangla);
         setReminderSettingsState(settings);
+        setPermissionGranted(granted);
       }
     })();
     return () => {
@@ -83,10 +93,35 @@ export default function SettingsScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (state) => {
+      if (state === 'active') {
+        const granted = await checkNotificationPermissions();
+        setPermissionGranted(granted);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
   const handleToggleReminder = useCallback(
     async (enabled: boolean) => {
       if (reminderSettings === null) {
         return;
+      }
+      if (enabled) {
+        const granted = await requestNotificationPermissions();
+        setPermissionGranted(granted);
+        if (!granted) {
+          Alert.alert(
+            'Permission Required',
+            'Notifications are disabled for this app. Please enable notifications in your device settings to receive daily reminders.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+            ],
+          );
+          return;
+        }
       }
       const nextSettings: ReminderSettings = {
         ...reminderSettings,
@@ -101,6 +136,46 @@ export default function SettingsScreen() {
     },
     [reminderSettings],
   );
+
+  const handleGrantPermission = useCallback(async () => {
+    const granted = await requestNotificationPermissions();
+    setPermissionGranted(granted);
+    if (!granted) {
+      Alert.alert(
+        'Permission Required',
+        'Notification permission is still disabled. Open device settings to allow notifications.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+        ],
+      );
+    } else if (reminderSettings && reminderSettings.enabled) {
+      await persistReminderSettings(reminderSettings);
+    }
+  }, [reminderSettings]);
+
+  const handleSendTestNotification = useCallback(async () => {
+    setTestNotificationBusy(true);
+    const success = await sendTestNotification();
+    setTestNotificationBusy(false);
+    if (success) {
+      setPermissionGranted(true);
+      Alert.alert(
+        'Test Notification Sent',
+        'A notification has been triggered. Please check your notification drawer or lock screen.',
+      );
+    } else {
+      setPermissionGranted(false);
+      Alert.alert(
+        'Permission Needed',
+        'Could not send notification. Please allow notifications for Quran Reading Tracker in your device settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+        ],
+      );
+    }
+  }, []);
 
   const handleTimeChange = useCallback(
     async (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -268,18 +343,43 @@ export default function SettingsScreen() {
           </View>
 
           {reminderSettings.enabled && (
-            <View style={styles.timeSelectSection}>
-              <Text style={styles.cardBody}>Reminder Time:</Text>
-              <Pressable
-                style={styles.timePickerButton}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Text style={styles.reminderTime}>
-                  {formatReminderTime(reminderSettings.hour, reminderSettings.minute)}
+            <>
+              <View style={styles.timeSelectSection}>
+                <Text style={styles.cardBody}>Reminder Time:</Text>
+                <Pressable
+                  style={styles.timePickerButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Text style={styles.reminderTime}>
+                    {formatReminderTime(reminderSettings.hour, reminderSettings.minute)}
+                  </Text>
+                  <Text style={styles.changeTimeHint}>Tap to change</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.permissionStatusRow}>
+                <Text style={permissionGranted ? styles.permissionGrantedText : styles.permissionWarningText}>
+                  {permissionGranted ? '✓ Notification permission allowed' : '⚠️ Notification permission needed'}
                 </Text>
-                <Text style={styles.changeTimeHint}>Tap to change</Text>
+                {!permissionGranted && (
+                  <Pressable style={styles.grantPermissionButton} onPress={() => void handleGrantPermission()}>
+                    <Text style={styles.grantPermissionButtonText}>Enable</Text>
+                  </Pressable>
+                )}
+              </View>
+
+              <Pressable
+                style={[styles.testNotificationButton, testNotificationBusy && styles.buttonDisabled]}
+                onPress={() => void handleSendTestNotification()}
+                disabled={testNotificationBusy}
+              >
+                {testNotificationBusy ? (
+                  <ActivityIndicator size="small" color={colors.accentText} />
+                ) : (
+                  <Text style={styles.testNotificationButtonText}>Send Test Notification</Text>
+                )}
               </Pressable>
-            </View>
+            </>
           )}
 
           {showTimePicker && (
@@ -492,6 +592,45 @@ function createStyles(colors: ThemeColors) {
       fontSize: 12,
       color: colors.textSecondary,
       marginTop: 2,
+    },
+    permissionStatusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 6,
+    },
+    permissionGrantedText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#10B981',
+    },
+    permissionWarningText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#F59E0B',
+    },
+    grantPermissionButton: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+    },
+    grantPermissionButtonText: {
+      color: colors.accentText,
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    testNotificationButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    testNotificationButtonText: {
+      color: colors.accentText,
+      fontSize: 14,
+      fontWeight: '700',
     },
     themeOptionsRow: {
       flexDirection: 'row',

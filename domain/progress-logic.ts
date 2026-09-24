@@ -6,6 +6,7 @@ import type {
   ReadingDay,
   ReadingDays,
 } from '../types/progress';
+import type { ReminderSettings } from '../types/settings';
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -331,4 +332,19 @@ export function formatBangladeshiTime(isoString: string): string {
   }
   const formattedMinutes = String(minutes).padStart(2, '0');
   return `${String(hours).padStart(2, '0')}:${formattedMinutes} ${period}`;
+}
+
+export function formatReminderTime(hour: number, minute: number): string {
+  let h = hour % 12;
+  if (h === 0) {
+    h = 12;
+  }
+  const period = hour >= 12 ? 'PM' : 'AM';
+  return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
+}
+
+export function getReminderTimeLabel(settings?: ReminderSettings): string {
+  const hour = settings ? settings.hour : 18;
+  const minute = settings ? settings.minute : 30;
+  return formatReminderTime(hour, minute);
 }
