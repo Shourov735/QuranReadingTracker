@@ -1,4 +1,3 @@
-import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -8,9 +7,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { getAllSurahs, getSurahByNumber } from '../data/quran-metadata';
+import SurahSearchModal from '../components/SurahSearchModal';
+import { getSurahByNumber } from '../data/quran-metadata';
 import type { ThemeColors } from '../theme/colors';
 import { useTheme } from '../theme/theme-context';
 import {
@@ -28,14 +29,13 @@ import { appendHistoryEntry } from '../services/history-storage';
 import type { ArabicProgress } from '../types/progress';
 import { createHistoryEntry } from '../types/history';
 
-const ALL_SURAHS = getAllSurahs();
-
 export default function UpdateArabicScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [progress, setProgress] = useState<ArabicProgress | null>(null);
   const [surahNumber, setSurahNumber] = useState(1);
   const [ruku, setRuku] = useState(1);
+  const [modalVisible, setModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -53,11 +53,30 @@ export default function UpdateArabicScreen() {
     };
   }, []);
 
+  const totalRuku = useMemo(() => getSurahByNumber(surahNumber).totalRuku, [surahNumber]);
+  const selectedSurah = useMemo(() => getSurahByNumber(surahNumber), [surahNumber]);
+
   const handleSurahChange = useCallback((number: number) => {
     setSurahNumber(number);
-    const totalRuku = getSurahByNumber(number).totalRuku;
-    setRuku((current) => (current <= totalRuku ? current : totalRuku));
+    const surahTotal = getSurahByNumber(number).totalRuku;
+    setRuku((current) => (current <= surahTotal ? current : surahTotal));
   }, []);
+
+  const handleRukuTextChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '');
+    if (!cleaned) {
+      setRuku(1);
+      return;
+    }
+    const num = parseInt(cleaned, 10);
+    if (num < 1) {
+      setRuku(1);
+    } else if (num > totalRuku) {
+      setRuku(totalRuku);
+    } else {
+      setRuku(num);
+    }
+  };
 
   const handleSave = useCallback(async () => {
     if (progress === null) {
@@ -90,38 +109,49 @@ export default function UpdateArabicScreen() {
     );
   }
 
-  const totalRuku = getSurahByNumber(surahNumber).totalRuku;
-  const rukuOptions = Array.from({ length: totalRuku }, (_, index) => index + 1);
-
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.field}>
         <Text style={styles.label}>Surah</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={surahNumber}
-            onValueChange={handleSurahChange}
-            style={styles.picker}
-          >
-            {ALL_SURAHS.map((surah) => (
-              <Picker.Item
-                key={surah.number}
-                label={`${surah.number}. ${surah.nameTransliteration}`}
-                value={surah.number}
-              />
-            ))}
-          </Picker>
-        </View>
+        <Pressable
+          style={styles.surahSelectorButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <View style={styles.surahInfo}>
+            <Text style={styles.surahNumberText}>{selectedSurah.number}.</Text>
+            <Text style={styles.surahNameText}>{selectedSurah.nameTransliteration}</Text>
+          </View>
+          <Text style={styles.surahArabicText}>{selectedSurah.nameArabic}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Ruku</Text>
-        <View style={styles.pickerContainer}>
-          <Picker selectedValue={ruku} onValueChange={setRuku} style={styles.picker}>
-            {rukuOptions.map((option) => (
-              <Picker.Item key={option} label={`Ruku ${option}`} value={option} />
-            ))}
-          </Picker>
+        <Text style={styles.label}>Ruku (1 to {totalRuku})</Text>
+        <View style={styles.numericContainer}>
+          <Pressable
+            style={[styles.stepButton, ruku <= 1 && styles.stepButtonDisabled]}
+            onPress={() => setRuku((prev) => Math.max(1, prev - 1))}
+            disabled={ruku <= 1}
+          >
+            <Text style={styles.stepButtonText}>-</Text>
+          </Pressable>
+
+          <TextInput
+            style={styles.numericInput}
+            value={ruku.toString()}
+            onChangeText={handleRukuTextChange}
+            keyboardType="number-pad"
+            maxLength={3}
+            textAlign="center"
+          />
+
+          <Pressable
+            style={[styles.stepButton, ruku >= totalRuku && styles.stepButtonDisabled]}
+            onPress={() => setRuku((prev) => Math.min(totalRuku, prev + 1))}
+            disabled={ruku >= totalRuku}
+          >
+            <Text style={styles.stepButtonText}>+</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -132,6 +162,13 @@ export default function UpdateArabicScreen() {
       >
         <Text style={styles.saveButtonLabel}>{saving ? 'Saving...' : 'Save'}</Text>
       </Pressable>
+
+      <SurahSearchModal
+        visible={modalVisible}
+        selectedSurahNumber={surahNumber}
+        onSelect={handleSurahChange}
+        onClose={() => setModalVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -144,7 +181,7 @@ function createStyles(colors: ThemeColors) {
     },
     content: {
       padding: 16,
-      gap: 16,
+      gap: 20,
     },
     loadingContainer: {
       flex: 1,
@@ -152,7 +189,7 @@ function createStyles(colors: ThemeColors) {
       justifyContent: 'center',
     },
     field: {
-      gap: 6,
+      gap: 8,
     },
     label: {
       fontSize: 13,
@@ -161,22 +198,77 @@ function createStyles(colors: ThemeColors) {
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
-    pickerContainer: {
+    surahSelectorButton: {
       backgroundColor: colors.surface,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
-    picker: {
-      height: 52,
+    surahInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    surahNumberText: {
+      fontSize: 16,
+      fontWeight: '700',
       color: colors.textPrimary,
+    },
+    surahNameText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.textPrimary,
+    },
+    surahArabicText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.textPrimary,
+    },
+    numericContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    stepButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepButtonDisabled: {
+      opacity: 0.4,
+    },
+    stepButtonText: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    numericInput: {
+      flex: 1,
+      height: 48,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      color: colors.textPrimary,
+      fontSize: 20,
+      fontWeight: '700',
     },
     saveButton: {
       backgroundColor: colors.accent,
       borderRadius: 12,
       paddingVertical: 14,
       alignItems: 'center',
-      marginTop: 4,
+      marginTop: 8,
     },
     saveButtonDisabled: {
       opacity: 0.5,

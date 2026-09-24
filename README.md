@@ -37,20 +37,28 @@ internet connection required.
 
 ## Features
 
-- Home screen with live progress cards for both tracks, a both-tracks streak
-  banner, and one-tap quick updates ("Mark Ruku done" / "Mark Ayat done")
-- Manual update screens with Surah + Ruku/Ayat pickers for both tracks, for
-  times when reading happens without the app open
-- End-of-Quran handling: finishing Surah 114 completes and freezes a track at
-  An-Nas with a celebration card and a "Start New Cycle" reset
-- Reading history log and statistics — current/longest streak, total reading
-  days, lifetime completions per track
-- Daily local reminder notification at 18:30, skipped automatically for the day
-  once both tracks are updated
-- Settings: daily reminder info, per-track reset, System/Light/Dark theme
-  override, and an about section with the repository link
-- Light and dark themes across the whole app
-- Fully offline and private — progress never leaves the device
+- **Home Screen & Live Progress**: Progress cards for Arabic and Bangla, both-tracks
+  streak banner, visual progress bars (Surah % and total Quran %), and one-tap quick
+  updates ("Mark Ruku done" / "Mark Ayat done").
+- **Bangla Reading Stepper**: Multi-ayat advancement stepper (`[-]`, `[+]`, and
+  preset chips `+1`, `+5`, `+10` up to +50) with in-flight double-tap protection.
+- **Manual Update Screens**: Fast searchable modal sheet to find any Surah by
+  number, transliteration, or Arabic name, plus direct numeric text inputs with
+  stepper buttons.
+- **Reading History & Statistics**: Chronological activity log with 12-hour
+  Bangladeshi timestamps (`hh:mm AM/PM`), date grouping ("Today", "Yesterday"),
+  latest track entry reversion (rolls back position and un-freezes completion),
+  entry deletion, and lifetime stats.
+- **End-of-Quran Handling**: Reaching the end of Surah 114 completes and freezes
+  a track at An-Nas with celebration feedback and a "Start New Cycle" reset.
+- **Configurable Daily Reminder**: Native 12-hour time picker dialog
+  (`@react-native-community/datetimepicker`) and an ON/OFF toggle switch in Settings.
+- **Backup & Restore**: Export and restore full JSON backups via system share
+  sheet, document picker, or clipboard copy/paste; optional history cleanup.
+- **Theming**: Complete Light, Dark, and System theme support across all screens.
+- **Automated Tests**: Unit test suite powered by Vitest verifying domain logic,
+  boundary rollovers, streak math, and backup validation.
+- **Offline & Private**: 100% offline, zero tracking, progress never leaves the device.
 
 ## Screenshots
 
@@ -64,9 +72,11 @@ internet connection required.
 
 - Expo (SDK 57) + Expo Router (file-based routing)
 - React Native + TypeScript (strict mode)
-- `@react-native-async-storage/async-storage` for persistence
-- `expo-notifications` for local scheduled reminders only — never push
-- `@react-native-picker/picker` for the surah/position pickers
+- `@react-native-async-storage/async-storage` for local persistence
+- `expo-notifications` for local scheduled reminders only (never push)
+- `@react-native-community/datetimepicker` for native reminder time selection
+- `expo-sharing`, `expo-file-system`, `expo-document-picker`, `expo-clipboard` for backup/restore
+- `vitest` for automated unit testing
 
 ## Getting Started
 
@@ -103,21 +113,22 @@ sources). The app runs standalone — Expo Go is not required.
 
 ```
 app/          Expo Router screens (file-based routing)
-components/   Reusable presentational components
+components/   Reusable presentational components (ProgressCard, SurahSearchModal)
 domain/       Pure business logic (no React/RN imports)
 data/         quran-metadata.json + typed loader
-services/     Storage layer, notification scheduling
+services/     Storage layer, notifications, backup/restore
 types/        Shared TypeScript types
 theme/        Colors, light/dark theme definitions
+__tests__/    Automated Vitest unit test suites
 ```
 
 ## How This Project Was Built
 
-The app was built in explicit phases (0–11), one feature at a time: metadata
+The app was built in explicit phases (0–13), one feature at a time: metadata
 layer → storage → progress logic → Home → update screens → reminder →
-settings → history/stats → dark mode → polish → EAS build setup. Each phase
-added a dated entry to `PROGRESS_LOG.md` describing what was built, decisions
-made, and anything the next phase needed to know.
+settings → history/stats → dark mode → polish → EAS build setup → README →
+productivity improvements & testing. Each phase added a dated entry to
+`PROGRESS_LOG.md` describing what was built, decisions made, and key notes.
 
 - `AGENTS.md` — the full project spec and architecture rules
 - `PROGRESS_LOG.md` — the complete build history
@@ -142,7 +153,6 @@ The following are documented future ideas — **not yet implemented**:
 
 - Multiple daily reminders
 - Monthly reading graph
-- Backup and restore
 - Cloud synchronization
 - Widgets
 - Bookmarking
@@ -150,7 +160,6 @@ The following are documented future ideas — **not yet implemented**:
 - Reading goals (e.g., finish one Juz every 10 days)
 - Juz-based progress tracking
 - Multiple translations
-- Editable reminder time
 
 ## Contributing
 
@@ -168,7 +177,11 @@ This is a public, MIT-licensed repository, meant to be cloned and forked.
    ```
    Scan the QR code with Expo Go on a physical Android phone. This is the
    project's only supported dev/test workflow — no emulator.
-3. Before opening a pull request, read `AGENTS.md` — it contains the
+3. Run tests:
+   ```bash
+   npm test
+   ```
+4. Before opening a pull request, read `AGENTS.md` — it contains the
    architecture rules, folder structure, and code style that all code must
    follow.
 

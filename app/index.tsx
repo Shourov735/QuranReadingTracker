@@ -15,8 +15,10 @@ import type { ThemeColors } from '../theme/colors';
 import { useTheme } from '../theme/theme-context';
 import {
   advanceAyat,
+  advanceAyats,
   advanceRuku,
   calculateStreak,
+  calculateTrackProgress,
   formatDateKey,
   recordReadingDay,
   resetArabicProgress,
@@ -47,6 +49,7 @@ export default function HomeScreen() {
   const [arabicProgress, setArabicProgress] = useState<ArabicProgress | null>(null);
   const [banglaProgress, setBanglaProgress] = useState<BanglaProgress | null>(null);
   const [readingDays, setReadingDays] = useState<ReadingDays>({});
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -70,9 +73,10 @@ export default function HomeScreen() {
   );
 
   const handleMarkArabicDone = useCallback(async () => {
-    if (arabicProgress === null) {
+    if (arabicProgress === null || isUpdating) {
       return;
     }
+    setIsUpdating(true);
     try {
       const todayKey = formatDateKey(new Date());
       const next = advanceRuku(arabicProgress);
@@ -95,37 +99,45 @@ export default function HomeScreen() {
       }
     } catch {
       Alert.alert('Update failed', 'Your progress could not be saved. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
-  }, [arabicProgress, readingDays]);
+  }, [arabicProgress, isUpdating, readingDays]);
 
-  const handleMarkBanglaDone = useCallback(async () => {
-    if (banglaProgress === null) {
-      return;
-    }
-    try {
-      const todayKey = formatDateKey(new Date());
-      const next = advanceAyat(banglaProgress);
-      await persistBanglaProgress(next);
-      const nextDays = recordReadingDay(readingDays, 'bangla', todayKey);
-      await persistReadingDays(nextDays);
-      setBanglaProgress(next);
-      setReadingDays(nextDays);
-      if (next !== banglaProgress) {
-        await appendHistoryEntry(
-          createHistoryEntry(
-            'bangla',
-            banglaProgress.surah,
-            banglaProgress.ayat,
-            next.surah,
-            next.ayat,
-            todayKey,
-          ),
-        ).catch(() => undefined);
+  const handleMarkBanglaDone = useCallback(
+    async (count: number = 1) => {
+      if (banglaProgress === null || isUpdating) {
+        return;
       }
-    } catch {
-      Alert.alert('Update failed', 'Your progress could not be saved. Please try again.');
-    }
-  }, [banglaProgress, readingDays]);
+      setIsUpdating(true);
+      try {
+        const todayKey = formatDateKey(new Date());
+        const next = advanceAyats(banglaProgress, count);
+        await persistBanglaProgress(next);
+        const nextDays = recordReadingDay(readingDays, 'bangla', todayKey);
+        await persistReadingDays(nextDays);
+        setBanglaProgress(next);
+        setReadingDays(nextDays);
+        if (next !== banglaProgress) {
+          await appendHistoryEntry(
+            createHistoryEntry(
+              'bangla',
+              banglaProgress.surah,
+              banglaProgress.ayat,
+              next.surah,
+              next.ayat,
+              todayKey,
+            ),
+          ).catch(() => undefined);
+        }
+      } catch {
+        Alert.alert('Update failed', 'Your progress could not be saved. Please try again.');
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [banglaProgress, isUpdating, readingDays],
+  );
 
   const performReset = useCallback(
     async (track: 'arabic' | 'bangla') => {
@@ -179,6 +191,19 @@ export default function HomeScreen() {
   const banglaSurah = getSurahByNumber(banglaProgress.surah);
   const streak = calculateStreak(Object.values(readingDays));
 
+  const arabicStats = calculateTrackProgress(
+    'arabic',
+    arabicProgress.surah,
+    arabicProgress.ruku,
+    arabicProgress.completed,
+  );
+  const banglaStats = calculateTrackProgress(
+    'bangla',
+    banglaProgress.surah,
+    banglaProgress.ayat,
+    banglaProgress.completed,
+  );
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.streakBanner}>
@@ -201,6 +226,9 @@ export default function HomeScreen() {
         completed={arabicProgress.completed}
         completedCount={arabicProgress.completedCount}
         lastUpdatedAt={arabicProgress.lastUpdatedAt}
+        surahPercent={arabicStats.surahPercent}
+        totalQuranPercent={arabicStats.totalQuranPercent}
+        disabled={isUpdating}
         onMarkDone={() => void handleMarkArabicDone()}
         onReset={() => confirmReset('arabic')}
       />
@@ -217,7 +245,11 @@ export default function HomeScreen() {
         completed={banglaProgress.completed}
         completedCount={banglaProgress.completedCount}
         lastUpdatedAt={banglaProgress.lastUpdatedAt}
-        onMarkDone={() => void handleMarkBanglaDone()}
+        surahPercent={banglaStats.surahPercent}
+        totalQuranPercent={banglaStats.totalQuranPercent}
+        disabled={isUpdating}
+        allowStepper={true}
+        onMarkDone={(step) => void handleMarkBanglaDone(step)}
         onReset={() => confirmReset('bangla')}
       />
 

@@ -749,3 +749,42 @@ of the session, in this format:
   criteria needed device verification this phase beyond reading the
   rendered README on GitHub.
 - Suggested commit message: `phase-12: complete project README`
+
+---
+
+## Phase 13 — Core Improvements & Productivity Features (2026-09-24)
+- Built: High-impact UX, productivity, and safety enhancements across the app:
+  1. Daily Reading UX: Added inline stepper on the Bangla Home card (allowing
+     `[-]`, `[+]`, and preset chips `+1`, `+5`, `+10` to advance multiple ayats at once);
+     added an in-flight guard to prevent double-tap race conditions on "Mark Done";
+     added visual progress bars for Surah % and total Quran % on both tracks.
+  2. History & Bangladeshi 12-Hour Timestamps: Enriched `HistoryEntry` with
+     `createdAt` ISO timestamp; formatted history items in exact 12-hour AM/PM format
+     (e.g. `02:30 PM`); added Revert button for the latest entry per track (safely
+     rolling back progress, unfreezing completion status, and decrementing count)
+     and Delete button for older entries.
+  3. Manual Update Usability: Replaced long picker dialog scrolling with a fast
+     searchable modal sheet for Surahs (filter by number, transliteration, or Arabic name)
+     and direct numeric TextInput with `[-]`/`[+]` steppers for Rukus/Ayats.
+  4. Configurable Reminder: Added native time picker dialog (@react-native-community/datetimepicker)
+     and an ON/OFF toggle switch in Settings with 12-hour format display.
+  5. Backup & Restore: Implemented full JSON backup export & restore supporting both
+     file sharing/importing (expo-sharing, expo-file-system, expo-document-picker) and
+     clipboard copy/paste (expo-clipboard); added Clear Reading History button.
+  6. Automated Testing: Added Vitest test suite (`npm test`) covering domain progress logic,
+     multi-ayat advancement, boundary rollovers, completion freeze, streak calculations,
+     track percentage progress, Bangladeshi time formatting, and backup data validation.
+- Files: `types/history.ts`, `types/settings.ts` (new), `domain/progress-logic.ts`,
+  `services/history-storage.ts`, `services/notification-service.ts`, `services/backup-service.ts` (new),
+  `components/SurahSearchModal.tsx` (new), `components/ProgressCard.tsx`,
+  `app/index.tsx`, `app/history.tsx`, `app/settings.tsx`, `app/update-arabic.tsx`,
+  `app/update-bangla.tsx`, `package.json`, `package-lock.json`, `app.json`,
+  `__tests__/progress-logic.test.ts` (new), `__tests__/storage-backup.test.ts` (new),
+  `PROGRESS_LOG.md`.
+- Decisions/deviations: Used Vitest for unit testing to avoid React Native peer-dependency
+  mismatches with jest-expo; normalized legacy history entries lacking `createdAt` on load
+  to ensure 100% backward compatibility; maintained zero-comment rule throughout all files.
+- Next phase should know: Full test suite passes (`npm test`), TypeScript check passes cleanly
+  (`npx tsc --noEmit`). Standalone APK builds will bundle the new native time picker and sharing plugins.
+- Suggested commit message: `phase-13: core improvements and productivity features`
+

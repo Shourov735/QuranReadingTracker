@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator,
+  Alert,
+  Pressable,
   SectionList,
   StyleSheet,
   Text,
@@ -11,12 +13,19 @@ import { getSurahByNumber } from '../data/quran-metadata';
 import {
   calculateLongestStreak,
   calculateStreak,
+  formatBangladeshiTime,
+  revertLastHistoryEntry,
 } from '../domain/progress-logic';
-import { getHistoryEntries } from '../services/history-storage';
+import {
+  deleteHistoryEntry,
+  getHistoryEntries,
+} from '../services/history-storage';
 import {
   getArabicProgress,
   getBanglaProgress,
   getReadingDays,
+  setArabicProgress as persistArabicProgress,
+  setBanglaProgress as persistBanglaProgress,
 } from '../services/progress-storage';
 import type { ThemeColors } from '../theme/colors';
 import { useTheme } from '../theme/theme-context';
@@ -59,6 +68,65 @@ export default function HistoryScreen() {
     }, []),
   );
 
+  const handleRevert = useCallback(
+    (entry: HistoryEntry) => {
+      if (arabicProgress === null || banglaProgress === null) {
+        return;
+      }
+      const trackLabel = entry.track === 'arabic' ? 'Arabic' : 'Bangla';
+      Alert.alert(
+        `Revert latest ${trackLabel} update?`,
+        'This will roll back your reading position to before this update and remove this entry from history.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Revert',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const reverted = revertLastHistoryEntry(entry, arabicProgress, banglaProgress);
+                if (entry.track === 'arabic') {
+                  await persistArabicProgress(reverted.arabic);
+                  setArabicProgress(reverted.arabic);
+                } else {
+                  await persistBanglaProgress(reverted.bangla);
+                  setBanglaProgress(reverted.bangla);
+                }
+                await deleteHistoryEntry(entry.id);
+                setEntries((prev) => (prev ? prev.filter((e) => e.id !== entry.id) : []));
+              } catch {
+                Alert.alert('Revert failed', 'Could not revert entry. Please try again.');
+              }
+            },
+          },
+        ],
+      );
+    },
+    [arabicProgress, banglaProgress],
+  );
+
+  const handleDelete = useCallback((entry: HistoryEntry) => {
+    Alert.alert(
+      'Delete history entry?',
+      'This will remove this record from your reading history without changing your current progress.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteHistoryEntry(entry.id);
+              setEntries((prev) => (prev ? prev.filter((e) => e.id !== entry.id) : []));
+            } catch {
+              Alert.alert('Delete failed', 'Could not delete entry. Please try again.');
+            }
+          },
+        },
+      ],
+    );
+  }, []);
+
   if (entries === null || readingDays === null || arabicProgress === null || banglaProgress === null) {
     return (
       <View style={styles.loadingContainer}>
@@ -67,6 +135,8 @@ export default function HistoryScreen() {
     );
   }
 
+  const latestArabicId = entries.find((e) => e.track === 'arabic')?.id;
+  const latestBanglaId = entries.find((e) => e.track === 'bangla')?.id;
   const sections = buildSections(entries);
   const readingDaysCount = Object.keys(readingDays).length;
 
@@ -76,7 +146,17 @@ export default function HistoryScreen() {
       contentContainerStyle={styles.content}
       sections={sections}
       keyExtractor={(entry) => entry.id}
-      renderItem={({ item }) => <HistoryRow entry={item} />}
+      renderItem={({ item }) => {
+        const isLatest = item.id === latestArabicId || item.id === latestBanglaId;
+        return (
+          <HistoryRow
+            entry={item}
+            isLatest={isLatest}
+            onRevert={() => handleRevert(item)}
+            onDelete={() => handleDelete(item)}
+          />
+        );
+      }}
       renderSectionHeader={({ section }) => (
         <Text style={styles.sectionHeader}>{formatSectionTitle(section.title)}</Text>
       )}
@@ -142,7 +222,14 @@ function isSameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
-function HistoryRow({ entry }: { entry: HistoryEntry }) {
+interface HistoryRowProps {
+  entry: HistoryEntry;
+  isLatest: boolean;
+  onRevert: () => void;
+  onDelete: () => void;
+}
+
+function HistoryRow({ entry, isLatest, onRevert, onDelete }: HistoryRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const trackLabel = entry.track === 'arabic' ? 'Arabic' : 'Bangla';
@@ -153,10 +240,25 @@ function HistoryRow({ entry }: { entry: HistoryEntry }) {
     entry.fromSurah === entry.toSurah
       ? `${fromSurahName} ${positionLabel} ${entry.fromPosition} → ${entry.toPosition}`
       : `${fromSurahName} ${positionLabel} ${entry.fromPosition} → ${toSurahName} ${positionLabel} ${entry.toPosition}`;
+
   return (
     <View style={styles.entryCard}>
-      <Text style={styles.entryTrack}>{trackLabel}</Text>
+      <View style={styles.entryHeaderRow}>
+        <Text style={styles.entryTrack}>{trackLabel}</Text>
+        <Text style={styles.entryTime}>{formatBangladeshiTime(entry.createdAt)}</Text>
+      </View>
       <Text style={styles.entryChange}>{change}</Text>
+      <View style={styles.actionRow}>
+        {isLatest ? (
+          <Pressable style={styles.revertButton} onPress={onRevert}>
+            <Text style={styles.revertButtonText}>Revert</Text>
+          </Pressable>
+        ) : (
+          <Pressable style={styles.deleteButton} onPress={onDelete}>
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -231,6 +333,12 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: 12,
       paddingHorizontal: 16,
       marginTop: 8,
+      gap: 6,
+    },
+    entryHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     entryTrack: {
       fontSize: 13,
@@ -239,11 +347,43 @@ function createStyles(colors: ThemeColors) {
       textTransform: 'uppercase',
       letterSpacing: 0.4,
     },
+    entryTime: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+    },
     entryChange: {
       fontSize: 15,
       fontWeight: '600',
       color: colors.textPrimary,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
       marginTop: 2,
+    },
+    revertButton: {
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+      borderRadius: 6,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.destructive,
+    },
+    revertButtonText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.destructive,
+    },
+    deleteButton: {
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+      borderRadius: 6,
+    },
+    deleteButtonText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
     },
     emptyCard: {
       backgroundColor: colors.surface,

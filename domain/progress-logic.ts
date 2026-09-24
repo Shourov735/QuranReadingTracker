@@ -1,4 +1,5 @@
-import { getNextSurahNumber, getSurahByNumber } from '../data/quran-metadata';
+import { getAllSurahs, getNextSurahNumber, getSurahByNumber } from '../data/quran-metadata';
+import type { HistoryEntry } from '../types/history';
 import type {
   ArabicProgress,
   BanglaProgress,
@@ -58,30 +59,46 @@ export function advanceRuku(progress: ArabicProgress): ArabicProgress {
 }
 
 export function advanceAyat(progress: BanglaProgress): BanglaProgress {
-  if (progress.completed) {
+  return advanceAyats(progress, 1);
+}
+
+export function advanceAyats(progress: BanglaProgress, count: number): BanglaProgress {
+  if (progress.completed || count <= 0) {
     return progress;
   }
-  const surahMeta = getSurahByNumber(progress.surah);
-  if (progress.ayat < surahMeta.totalAyat) {
-    return {
-      ...progress,
-      ayat: progress.ayat + 1,
-      lastUpdatedAt: nowIso(),
-    };
+  let currentSurah = progress.surah;
+  let currentAyat = progress.ayat;
+  let remaining = count;
+  let completed = false;
+  let completedCount = progress.completedCount;
+
+  while (remaining > 0) {
+    const surahMeta = getSurahByNumber(currentSurah);
+    const availableInSurah = surahMeta.totalAyat - currentAyat;
+    if (remaining <= availableInSurah) {
+      currentAyat += remaining;
+      remaining = 0;
+    } else {
+      const nextSurah = getNextSurahNumber(currentSurah);
+      if (nextSurah === null) {
+        completed = true;
+        completedCount += 1;
+        currentAyat = surahMeta.totalAyat;
+        remaining = 0;
+      } else {
+        remaining -= (availableInSurah + 1);
+        currentSurah = nextSurah;
+        currentAyat = 1;
+      }
+    }
   }
-  const nextSurahNumber = getNextSurahNumber(progress.surah);
-  if (nextSurahNumber === null) {
-    return {
-      ...progress,
-      completed: true,
-      completedCount: progress.completedCount + 1,
-      lastUpdatedAt: nowIso(),
-    };
-  }
+
   return {
     ...progress,
-    surah: nextSurahNumber,
-    ayat: 1,
+    surah: currentSurah,
+    ayat: currentAyat,
+    completed,
+    completedCount,
     lastUpdatedAt: nowIso(),
   };
 }
@@ -215,4 +232,103 @@ export function calculateLongestStreak(readingDays: ReadingDay[]): number {
     }
   }
   return longest;
+}
+
+export interface TrackProgressPercentage {
+  surahPercent: number;
+  totalQuranPercent: number;
+}
+
+export function calculateTrackProgress(
+  track: 'arabic' | 'bangla',
+  surah: number,
+  position: number,
+  completed: boolean,
+): TrackProgressPercentage {
+  if (completed) {
+    return { surahPercent: 100, totalQuranPercent: 100 };
+  }
+  const allSurahs = getAllSurahs();
+  const currentSurah = getSurahByNumber(surah);
+
+  if (track === 'arabic') {
+    const surahPercent = Math.min(100, Math.round((position / currentSurah.totalRuku) * 100));
+    let cumulative = 0;
+    let total = 0;
+    for (const item of allSurahs) {
+      if (item.number < surah) {
+        cumulative += item.totalRuku;
+      }
+      total += item.totalRuku;
+    }
+    cumulative += position;
+    const totalQuranPercent = total > 0 ? Math.min(100, Math.round((cumulative / total) * 1000) / 10) : 0;
+    return { surahPercent, totalQuranPercent };
+  } else {
+    const surahPercent = Math.min(100, Math.round((position / currentSurah.totalAyat) * 100));
+    let cumulative = 0;
+    let total = 0;
+    for (const item of allSurahs) {
+      if (item.number < surah) {
+        cumulative += item.totalAyat;
+      }
+      total += item.totalAyat;
+    }
+    cumulative += position;
+    const totalQuranPercent = total > 0 ? Math.min(100, Math.round((cumulative / total) * 1000) / 10) : 0;
+    return { surahPercent, totalQuranPercent };
+  }
+}
+
+export function revertLastHistoryEntry(
+  entry: HistoryEntry,
+  currentArabic: ArabicProgress,
+  currentBangla: BanglaProgress,
+): { arabic: ArabicProgress; bangla: BanglaProgress } {
+  if (entry.track === 'arabic') {
+    const wasCompleted = currentArabic.completed && entry.toSurah === 114;
+    const nextCompletedCount = wasCompleted
+      ? Math.max(0, currentArabic.completedCount - 1)
+      : currentArabic.completedCount;
+    return {
+      arabic: {
+        ...currentArabic,
+        surah: entry.fromSurah,
+        ruku: entry.fromPosition,
+        completed: false,
+        completedCount: nextCompletedCount,
+        lastUpdatedAt: nowIso(),
+      },
+      bangla: currentBangla,
+    };
+  } else {
+    const wasCompleted = currentBangla.completed && entry.toSurah === 114;
+    const nextCompletedCount = wasCompleted
+      ? Math.max(0, currentBangla.completedCount - 1)
+      : currentBangla.completedCount;
+    return {
+      arabic: currentArabic,
+      bangla: {
+        ...currentBangla,
+        surah: entry.fromSurah,
+        ayat: entry.fromPosition,
+        completed: false,
+        completedCount: nextCompletedCount,
+        lastUpdatedAt: nowIso(),
+      },
+    };
+  }
+}
+
+export function formatBangladeshiTime(isoString: string): string {
+  const date = new Date(isoString);
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const period = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) {
+    hours = 12;
+  }
+  const formattedMinutes = String(minutes).padStart(2, '0');
+  return `${String(hours).padStart(2, '0')}:${formattedMinutes} ${period}`;
 }
