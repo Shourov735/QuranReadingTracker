@@ -788,3 +788,33 @@ of the session, in this format:
   (`npx tsc --noEmit`). Standalone APK builds will bundle the new native time picker and sharing plugins.
 - Suggested commit message: `phase-13: core improvements and productivity features`
 
+---
+
+## Phase 14 — GitHub Integration & EAS CI/CD Automation (2026-09-24)
+- Built: Complete GitHub repository integration with Expo EAS and CI/CD pipelines:
+  1. EAS Configuration: Updated `eas.json` with remote version code management
+     (`appVersionSource: "remote"`, `autoIncrement: true`), configured development,
+     preview (standalone APK), and production profiles.
+  2. Native EAS Workflows: Added `.eas/workflows/build-apk.yaml` triggered on GitHub
+     `push` to `master`, `pull_request` to `master`, and manual dispatch (`workflow_dispatch`).
+     Validated against Expo's official workflows schema via `eas workflow:validate`.
+     Configured concurrency control to cancel outdated in-flight builds.
+  3. GitHub Actions CI: Added `.github/workflows/ci.yml` quality gate executing on
+     every push and pull request to verify TypeScript type checking (`tsc --noEmit`),
+     Vitest unit tests (`npm test`), and EAS workflow validation before any build runs.
+  4. GitHub Actions Manual Build: Added `.github/workflows/eas-build.yml` with
+     `workflow_dispatch` allowing on-demand EAS cloud builds directly from the GitHub UI
+     with profile selection (`preview` APK or `production` AAB).
+  5. Convenience Scripts & Docs: Added `typecheck`, `build:apk`, and `build:prod`
+     scripts in `package.json`; updated `README.md` with new APK link and CI/CD instructions.
+- Files: `eas.json`, `.eas/workflows/build-apk.yaml` (new), `.github/workflows/ci.yml` (new),
+  `.github/workflows/eas-build.yml` (new), `package.json`, `README.md`, `PROGRESS_LOG.md`.
+- Decisions/deviations: Used remote version code management to avoid merge conflicts and
+  ensure every GitHub build receives an incremented Android `versionCode`; set up dual
+  workflow support (Expo GitHub App EAS Workflows + GitHub Actions CI quality gate) for
+  maximum reliability and automated PR feedback.
+- Next phase should know: GitHub repo is now fully hooked to Expo EAS. Pushes to `master`
+  or PRs trigger automated CI tests and EAS builds. The user can add `EXPO_TOKEN` to
+  GitHub repository secrets if they wish to use GitHub Actions manual dispatch as well.
+- Suggested commit message: `phase-14: github integration and eas cicd workflows`
+

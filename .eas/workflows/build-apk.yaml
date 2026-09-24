@@ -1,0 +1,22 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel_in_progress: true
+
+jobs:
+  build_apk:
+    name: Build Android APK
+    type: build
+    params:
+      platform: android
+      profile: preview

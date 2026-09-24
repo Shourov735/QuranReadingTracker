@@ -101,13 +101,33 @@ consumes free-tier build quota.
 
 ### Download the APK
 
-Prefer to skip the build? A signed APK built from this repository is available
+Prefer to skip the build? A signed APK with all Phase 13 features is available
 for direct download:
 
-<https://expo.dev/accounts/shourov735s-team/projects/quran-reading-tracker/builds/fad1201b-f01e-45da-9e79-161a3428f744>
+- **Direct Download**: <https://expo.dev/artifacts/eas/7PhDPCRmLMoZ50Qv9hCXD9nVWPNp2oJHxmTakZd05k4.apk>
+- **Build Page & QR Code**: <https://expo.dev/accounts/shourov735s-team/projects/quran-reading-tracker/builds/c61133f7-689d-479b-b1a3-bba2734ec1ef>
 
 Install it on any Android device (you may need to allow installs from unknown
 sources). The app runs standalone — Expo Go is not required.
+
+### Building Directly from GitHub (CI/CD)
+
+This repository is configured for automated cloud builds and quality checks:
+
+1. **EAS Workflows (`.eas/workflows/build-apk.yaml`)**:
+   Connected via the Expo GitHub App. Pushing to `master` or creating a pull
+   request automatically triggers an EAS cloud build. The Expo bot comments on
+   pull requests with a QR code and direct APK download link, and reports
+   commit status checks.
+2. **GitHub Actions CI (`.github/workflows/ci.yml`)**:
+   Automatically runs on every push and PR to verify TypeScript compilation
+   (`tsc --noEmit`), Vitest unit tests (`npm test`), and EAS workflow validation
+   before building.
+3. **GitHub Actions EAS Build (`.github/workflows/eas-build.yml`)**:
+   Allows triggering a build on demand from GitHub:
+   - Go to **Actions** → **EAS Android Build** → **Run workflow**.
+   - Select your desired profile (`preview` for APK or `production` for Google Play AAB).
+   - Requires adding `EXPO_TOKEN` to repository secrets.
 
 ## Project Structure
 
